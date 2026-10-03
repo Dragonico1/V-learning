@@ -9,6 +9,7 @@ import java.util.List;
 public record VlearningProperties(
         String dominioInstitucional,
         Dev dev,
+        Mail mail,
         Jwt jwt,
         Sesion sesion,
         Otp otp,
@@ -19,6 +20,8 @@ public record VlearningProperties(
         Cors cors) {
 
     public record Dev(boolean exponerSecretos, boolean sembrarDatos) {}
+
+    public record Mail(String remitente) {}
 
     public record Jwt(String secret, int expiracionHoras) {}
 
