@@ -367,10 +367,6 @@ CREATE TABLE configuraciones_accesibilidad (
     texto_a_voz BIT NOT NULL DEFAULT 0,
     tiempo_adicional INT NOT NULL DEFAULT 0,
     fecha_configuracion DATETIME2(6) NOT NULL DEFAULT SYSDATETIME(),
-    -- [EXT] RF-023: ritmo de aprendizaje (rápido, moderado o extendido); define
-    --       la frecuencia de los recordatorios y el tiempo sugerido.
-    ritmo_aprendizaje VARCHAR(50) NOT NULL DEFAULT 'MODERADO',
-    CONSTRAINT ck_config_ritmo CHECK (ritmo_aprendizaje IN ('RAPIDO', 'MODERADO', 'EXTENDIDO')), -- [EXT]
     CONSTRAINT ck_config_fuente CHECK (tamano_fuente > 0),
     CONSTRAINT ck_config_espaciado CHECK (espaciado_linea IS NULL OR espaciado_linea > 0),
     CONSTRAINT ck_config_tiempo CHECK (tiempo_adicional >= 0),
