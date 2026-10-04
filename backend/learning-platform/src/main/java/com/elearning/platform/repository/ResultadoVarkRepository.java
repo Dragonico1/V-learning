@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface ResultadoVarkRepository extends JpaRepository<ResultadoVark, Long> {
 
     Optional<ResultadoVark> findFirstByPerfilAprendizajeIdOrderByFechaRealizacionDescIdDesc(Long perfilAprendizajeId);
+
+    long countByPerfilAprendizajeId(Long perfilAprendizajeId);
 }

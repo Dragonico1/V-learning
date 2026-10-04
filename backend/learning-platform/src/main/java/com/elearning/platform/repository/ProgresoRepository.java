@@ -26,4 +26,14 @@ public interface ProgresoRepository extends JpaRepository<Progreso, Long> {
     @Query("select count(p) from Progreso p where p.estudiante.id = :estudianteId and p.contenido.modulo.id = :moduloId "
             + "and p.contenido.publicado = true and p.estado = com.elearning.platform.enums.EstadoProgreso.COMPLETADO")
     long contarCompletadosEnModulo(@Param("estudianteId") Long estudianteId, @Param("moduloId") Long moduloId);
+
+    /** Para el ranking: estudiante y cantidad de contenidos publicados completados en el curso. */
+    @Query("select p.estudiante.id, count(p) from Progreso p where p.contenido.modulo.curso.id = :cursoId "
+            + "and p.contenido.publicado = true and p.estado = com.elearning.platform.enums.EstadoProgreso.COMPLETADO "
+            + "group by p.estudiante.id")
+    List<Object[]> completadosPorEstudiante(@Param("cursoId") Long cursoId);
+
+    @Query("select p from Progreso p join fetch p.contenido c join fetch c.modulo m join fetch m.curso "
+            + "where p.estudiante.id = :estudianteId")
+    List<Progreso> delEstudianteConCurso(@Param("estudianteId") Long estudianteId);
 }

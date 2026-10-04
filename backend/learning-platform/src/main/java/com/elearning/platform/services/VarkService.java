@@ -11,7 +11,9 @@ import com.elearning.platform.repository.EstudianteRepository;
 import com.elearning.platform.repository.PerfilAprendizajeRepository;
 import com.elearning.platform.repository.RespuestaVarkParcialRepository;
 import com.elearning.platform.repository.ResultadoVarkRepository;
+import com.elearning.platform.events.VarkCompletadoEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class VarkService {
     private final ResultadoVarkRepository resultados;
     private final EstudianteRepository estudiantes;
     private final AuditoriaService auditoria;
+    private final ApplicationEventPublisher eventos;
 
     public CuestionarioRespuesta cuestionario() {
         return new CuestionarioRespuesta(BancoVark.TOTAL, BancoVark.preguntas());
@@ -89,6 +92,7 @@ public class VarkService {
         for (EstiloVark e : EstiloVark.values()) conteo.put(e, 0);
         respuestas.forEach(r -> conteo.merge(r.getOpcion(), 1, Integer::sum));
 
+        boolean primeraVez = resultados.countByPerfilAprendizajeId(perfil.getId()) == 0;
         ResultadoVark res = new ResultadoVark();
         res.setPerfilAprendizaje(perfil);
         res.setVisual(conteo.get(EstiloVark.VISUAL));
@@ -105,6 +109,7 @@ public class VarkService {
         parciales.borrarDelPerfil(perfil.getId());
         auditoria.registrar(estudianteId, "VARK_COMPLETADO", "perfiles-aprendizaje/" + perfil.getId(),
                 ResultadoAuditoria.PERMITIDO, ip);
+        if (primeraVez) eventos.publishEvent(new VarkCompletadoEvent(estudianteId));
         return aRespuesta(res, predominante);
     }
 
