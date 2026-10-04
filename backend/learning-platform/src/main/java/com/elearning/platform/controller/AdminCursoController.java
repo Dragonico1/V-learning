@@ -1,5 +1,6 @@
 package com.elearning.platform.controller;
 
+import com.elearning.platform.dto.CursoDtos.CursoResumen;
 import com.elearning.platform.dto.CursoDtos.InscribirRequest;
 import com.elearning.platform.dto.CursoDtos.InscripcionResultado;
 import com.elearning.platform.security.UsuarioPrincipal;
@@ -12,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /** El administrador inscribe estudiantes en cualquier curso publicado. */
 @RestController
 @PreAuthorize("hasRole('ADMINISTRADOR')")
@@ -19,6 +22,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminCursoController {
 
     private final CursoService cursos;
+
+    @GetMapping("/admin/cursos")
+    public List<CursoResumen> todos() {
+        return cursos.todos();
+    }
 
     @PostMapping("/admin/cursos/{id}/inscripciones")
     public InscripcionResultado inscribir(@AuthenticationPrincipal UsuarioPrincipal admin, @PathVariable Long id,

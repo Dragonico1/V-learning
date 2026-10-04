@@ -104,6 +104,12 @@ public class CursoService {
                 insc == null ? BigDecimal.ZERO : insc.getPorcentajeCompletado(), principal, secundario, items);
     }
 
+    /** Administrador: todos los cursos, en cualquier estado. */
+    @Transactional(readOnly = true)
+    public List<CursoResumen> todos() {
+        return cursos.todosConInstructor().stream().map(c -> resumen(c, null)).toList();
+    }
+
     @Transactional
     public CursoResumen inscribirme(Long cursoId, Long estudianteId, String ip) {
         Curso curso = cursos.findById(cursoId).filter(c -> c.getEstado() == EstadoCurso.PUBLICADO)
