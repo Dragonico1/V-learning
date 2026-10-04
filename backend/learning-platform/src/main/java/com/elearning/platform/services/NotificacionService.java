@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -63,6 +64,16 @@ public class NotificacionService {
     @Transactional
     public Optional<Notificacion> notificar(Long usuarioId, String titulo, String mensaje, boolean obligatoria) {
         return usuarios.findById(usuarioId).flatMap(u -> notificar(u, titulo, mensaje, obligatoria));
+    }
+
+    /**
+     * Avisos operativos al equipo (instructor): no repite el mismo título el mismo día.
+     * Son obligatorios porque no son preferencias de estudio sino gestión de contenidos.
+     */
+    @Transactional
+    public void notificarUnaVezAlDia(Long usuarioId, String titulo, String mensaje) {
+        if (notificaciones.contarPorTituloDesde(usuarioId, titulo, LocalDate.now().atStartOfDay()) > 0) return;
+        notificar(usuarioId, titulo, mensaje, true);
     }
 
     /** Alerta a todos los administradores activos (siempre obligatoria). */
