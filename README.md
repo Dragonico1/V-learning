@@ -173,6 +173,11 @@ cd backend/learning-platform && ./mvnw spring-boot:run
 | `DB_URL` | No | `jdbc:sqlserver://localhost:1433;databaseName=vlearning;encrypt=true;trustServerCertificate=true` |
 | `JWT_SECRET` | Sí | — |
 | `OLLAMA_URL` / `OLLAMA_MODEL` | No | `http://localhost:11434` / `gemma2:2b` |
+| `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | No | Sin SMTP el correo no se envía y todo queda en la plataforma |
+| `MAIL_REMITENTE` | No | `no-reply@tdea.edu.co` |
+| `VLEARNING_DEV_EXPONER_SECRETOS` | No | `true` (apágalo en producción) |
+| `VLEARNING_DEV_SEMBRAR_DATOS` | No | `true` (crea datos demo solo si no hay usuarios) |
+| `VLEARNING_SWAGGER` | No | `true` (`false` oculta Swagger) |
 
 Con el backend arriba:
 
@@ -199,7 +204,7 @@ Si Ollama no está disponible, el resto de la plataforma funciona y el Tutor res
 
 ### 6.5 Modo desarrollo sin correo
 
-`vlearning.dev.exponer-secretos=true` (valor por defecto en desarrollo) devuelve en la respuesta de la API el **OTP**, la **contraseña temporal** y el **enlace de recuperación**, para probar sin servidor de correo. El `MailService` por ahora escribe en el log. **Apágalo en cualquier entorno real.**
+`vlearning.dev.exponer-secretos=true` (valor por defecto en desarrollo) devuelve en la respuesta de la API el **OTP**, la **contraseña temporal** y el **enlace de recuperación**, para probar sin servidor de correo. Si no configuras SMTP (`SPRING_MAIL_*`), el `MailService` no envía correos: la contraseña temporal solo se devuelve en la API si la entrega por correo falló o si este modo está activo. **Apágalo en cualquier entorno real.**
 
 ---
 
@@ -210,13 +215,15 @@ Si Ollama no está disponible, el resto de la plataforma funciona y el Tutor res
 | Rol | Correo | Contraseña | Nota |
 |---|---|---|---|
 | Administrador | `admin@tdea.edu.co` | `Vlearning#2026` | |
-| Instructora | `laura.mejia@tdea.edu.co` | `Vlearning#2026` | Dueña de los 3 cursos |
+| Instructora | `laura.mejia@tdea.edu.co` | `Vlearning#2026` | Dueña del curso de ejemplo |
 | Estudiante | `camila.rojas@tdea.edu.co` | `Temporal#2026` | **Primer acceso pendiente**: recorre cambio de contraseña, VARK y accesibilidad |
 | Estudiante | `andres.gomez@tdea.edu.co` | `Vlearning#2026` | |
 | Estudiante | `sofia.restrepo@tdea.edu.co` | `Vlearning#2026` | |
 | Estudiante | `mateo.alvarez@tdea.edu.co` | `Vlearning#2026` | |
 
-Cursos de ejemplo (publicados): **Programación I**, **Diseño de interfaces accesibles** y **Metodologías ágiles: Scrum**, con módulos, contenidos en varios formatos (videos con subtítulos y transcripción), glosarios, evaluaciones, reglas e insignias de gamificación y un Tutor de IA activo.
+Curso de ejemplo (publicado): **Introducción a la programación**, con 2 módulos, 4 contenidos (3 lecturas y 1 video con subtítulos y transcripción), un quiz de 2 preguntas y las 4 cuentas de estudiante inscritas. Los videos de la demo apuntan a URLs de ejemplo (`example.org`): no reproducen video real.
+
+Las **reglas de puntos, las 4 insignias y el Tutor de IA** se crean siempre que sus tablas estén vacías (también fuera del modo demostración). Con `vlearning.dev.exponer-secretos=true` el arranque imprime una advertencia en el log.
 
 El OTP del login se muestra en la respuesta mientras el modo desarrollo esté activo.
 
@@ -450,7 +457,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Autenticación en dos pasos (HU-002):** OTP de 6 dígitos válido 5 min, guardado hasheado; bloqueo de 15 min tras 5 fallos en 15 min, con aviso por correo.
 - **Sesiones (HU-004):** cada login crea una fila en `sesiones` con el hash SHA-256 del token; se valida firma, sesión activa, inactividad deslizante de 30 min y que el usuario siga habilitado. Cambiar o restablecer la contraseña invalida todas las sesiones.
 - **Contraseñas:** BCrypt; política de al menos 10 caracteres con mayúscula, minúscula, número y símbolo.
-- **Auditoría solo de inserción (HU-015):** se logra con `DENY UPDATE, DELETE` al usuario de la aplicación y no con un trigger, que chocaría con la FK `ON DELETE SET NULL`. Se registra de forma asíncrona para no sumar más de 100 ms.
+- **Auditoría solo de inserción (HU-015):** se logra con `DENY UPDATE, DELETE` al usuario de la aplicación y no con un trigger, que chocaría con la FK `ON DELETE SET NULL`. Se registra de forma síncrona en una transacción independiente (`REQUIRES_NEW`), de modo que el registro sobrevive aunque la operación se revierta.
 - **Regla de avance (HU-007):** un módulo está completo cuando se completó al menos un formato publicado; el % del curso es módulos completos ÷ módulos con contenido publicado.
 - **Personalización (HU-006):** primero formatos del método principal, luego del secundario, luego el resto; si no hay formato afín, se muestra el texto estructurado por defecto y se marca el módulo.
 - **Publicación conforme (HU-020):** un video no se publica sin subtítulos y transcripción; un podcast no sin transcripción.
@@ -458,9 +465,9 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Gamificación:** contenido completado 50 pts (solo la primera vez); evaluación 100 pts proporcional a la nota y **solo suma la mejora** sobre el mejor intento previo; test VARK 30 pts. Niveles cada 500 puntos. Reglas editables por el administrador.
 - **Tutor de IA:** solo texto, sin markdown; contexto de lección + avance + perfil de accesibilidad; no mantiene transacción abierta mientras espera a Ollama; si Ollama no responde devuelve 503 con mensaje claro y no guarda nada.
 - **Sin sonidos:** la app no reproduce audio de notificación; cada señal tiene alerta visual y región `aria-live`.
-- **Correo:** `MailService` escribe en el log; deja un punto de extensión para SMTP real.
+- **Correo:** `MailService` envía por SMTP real si defines `SPRING_MAIL_*`; sin SMTP devuelve «no enviado» y la plataforma usa el canal alterno (notificación interna).
 - **Evaluación según el método (RF-007):** si un módulo tiene varias evaluaciones, se ordenan por afinidad: Visual → simulación, quiz; Auditivo → quiz; Lectura/escritura → quiz, práctica; Kinestésico → práctica, simulación. Con una sola evaluación, se muestra esa.
-- **Recordatorios (RF-011):** el job diario avisa de fechas límite y evaluaciones pendientes, y de inactividad tras 3 días (configurable con `vlearning.notificaciones.dias-inactividad`). Si falla el canal elegido, reintenta por el alterno.
+- **Recordatorios (RF-011):** el modelo de datos no tiene fechas límite, así que el job diario (`vlearning.notificaciones.cron`, 8:00 por defecto) avisa de cursos activos sin completar y de inactividad tras 3 días; respeta las preferencias de cada estudiante y no repite el mismo aviso el mismo día (configurable con `vlearning.notificaciones.dias-inactividad`). Si falla el canal elegido, reintenta por el alterno.
 - **Privacidad del ranking (RF-009):** `perfiles_gamificacion.visible_ranking`. En modo privado se excluye de `posiciones_ranking`, pero el estudiante conserva sus puntos y su nivel.
 - **Reportes de chat (RF-010):** el mensaje pasa a `REPORTADO` y se notifica al instructor del curso y a los administradores; quién reportó queda en la auditoría.
 - **Posponer recordatorios (RF-011):** `notificaciones.pospuesta_hasta`; mientras no llegue esa fecha no se muestra.
@@ -468,6 +475,23 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Informes de accesibilidad (RF-012):** el uso de funciones de accesibilidad se agrega por función y categoría; no se muestra la discapacidad de cada estudiante a instructores.
 - **Cifrado (RF-013):** contraseñas, OTP y tokens con hash desde la aplicación; el resto en reposo con TDE y respaldos cifrados (guion comentado al final de `01_schema.sql`); en tránsito, TLS. **Los PDF y Excel exportados (RF-006, RF-012) no llevan contraseña**: por decisión del equipo se entregan solo por TLS; los diagramas dicen «cifrado» y esto es una desviación consciente.
 - **Alertas de seguridad (RF-013):** una operación bloqueada o un intento de inyección o XSS se audita como incidente y notifica a los administradores.
+
+- **Contenido único:** hay una sola entidad `Contenido` con el campo `formato` (VIDEO, PODCAST, SIMULACION, LECTURA); no hay subclases `Video`, `Podcast`, etc. como en el diagrama de clases, para mantener el esquema relacional oficial.
+- **Recursos accesibles solo de texto:** un recurso sin URL (transcripción, versión simplificada, texto alternativo) se guarda con `url = 'interno:texto'` y su contenido en `descripcion`, porque la columna `url` es obligatoria.
+- **Filtro de entradas maliciosas:** el cuerpo de un contenido que incluya `<script` o patrones de inyección SQL se rechaza (RF-013). Si un instructor necesita mostrar código, debe escribirlo sin esas secuencias.
+- **Ranking:** se recalcula por curso a partir de la actividad (periodo `ACUMULADO`) al ocurrir un evento y si tiene más de 10 minutos.
+- **Restablecer accesibilidad:** vuelve a los valores por defecto de las categorías que la persona tiene activas, no a cero.
+- **Endpoints adicionales a los de la sección 10:** `GET/PUT /vark/metodos`, `POST /accesibilidad/previsualizar`, `GET /accesibilidad/temas`, `POST /instructor/cursos/{id}/archivar`, `GET /contenidos/{id}/conformidad`, `POST /contenidos/{id}/despublicar`, `GET /contenidos/{id}/recursos`, `DELETE /recursos/{id}`, `PUT /modulos/{id}`, `PUT/DELETE /evaluaciones/{id}`, `POST /mensajes/{id}/ocultar` (moderación), `POST /informes/vista` (vista previa del informe, mensaje «sin datos») y `GET /notificaciones/preferencias`.
+
+### Estado de verificación (léelo antes de ejecutar)
+
+El backend se escribió en un entorno **sin acceso a Maven Central**, por lo que **nunca se compiló ni se ejecutó contra SQL Server**. Lo que sí se comprobó:
+
+- Sintaxis de todos los `.java` con un analizador independiente y cruce de imports entre clases del proyecto (0 errores).
+- Nombres de propiedades de las consultas JPQL y de los métodos derivados de los repositorios contra las entidades (0 hallazgos reales).
+- Ejecución real (`javac` + `java`) de la lógica pura: `TextoApoyo`, `ContrasteWcag` y `CorreccionEvaluacion` (12 pruebas pasan).
+
+Lo que **no** se comprobó y puede fallar al primer arranque: cableado de Spring (beans, seguridad), mapeos JPA/Hibernate contra el esquema, comportamiento de SQL Server, WebSocket, generación de PDF (OpenPDF) y Excel (POI), y las llamadas reales a Ollama. Ejecuta `./mvnw clean package` y, si hay errores de compilación o de arranque, pégalos para corregirlos. Las pruebas `PoliticaPasswordTest` y `TutorServiceTest` requieren el classpath de Spring y solo correrán con Maven.
 
 ---
 
