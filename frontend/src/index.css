@@ -1,160 +1,131 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&family=Inter:wght@400;500&display=swap");
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   V-Learning · tokens de diseño (sección 4 de la especificación)
+   WCAG 2.1 AA: texto normal 4.5:1, texto grande y componentes 3:1.
+   ------------------------------------------------------------------ */
 @theme {
-  /* Colores principales */
-  --color-navy: #14213d;
-  --color-primary: #2f6fed;
-  --color-primary-light: #e3ecfd;
+  --color-primary-100: #f3eeff;
+  --color-primary-200: #e0d9fb;
+  --color-primary-300: #c4b5fd;
+  --color-primary-600: #5b21b6;
+  --color-primary-700: #4c1d95;
 
-  /* Colores de acento (usados por los 4 estilos de aprendizaje VARK) */
-  --color-accent-blue: #2f6fed;
-  --color-accent-teal: #2fbfc4;
-  --color-accent-coral: #eb5757;
-  --color-accent-amber: #f2994a;
+  --color-tutor-100: #e8f5f0;
+  --color-tutor-700: #0b5d4f;
 
-  --color-accent-blue-light: #e3ecfd;
-  --color-accent-teal-light: #e3f7f8;
-  --color-accent-coral-light: #fde6e1;
-
-  /* Semántico (no forma parte de la taxonomía VARK) */
-  --color-danger: #c0392b;
-  --color-success: #2e9e5b;
-  --color-success-light: #e6f4ec;
-  --color-accent-amber-light: #fceedd;
-
-  /* Neutros */
-  --color-background: #f5f6fa;
+  --color-sidebar: #0b1022;
+  --color-sidebar-surface: #161c2e;
+  --color-page: #f8f9fc;
   --color-surface: #ffffff;
-  --color-border: #e2e5f0;
-  --color-text-secondary: #6b7280;
+  --color-subtle: #f1f5f9;
+  --color-strong: #0f172a;
+  --color-body: #475569;
+  --color-muted: #64748b;
+  --color-line: #cbd5e1;
+  --color-track: #d5dce8;
 
-  /* Tipografía */
-  --font-heading: "Manrope", sans-serif;
-  --font-sans: "Inter", sans-serif;
+  --color-ok-bg: #e6f4ec;
+  --color-ok-fg: #166534;
+  --color-warn-bg: #ffedd5;
+  --color-warn-fg: #9a3412;
+  --color-err-bg: #fee2e2;
+  --color-err-fg: #b91c1c;
+  --color-dot: #dc2626;
 
-  /* Sombras */
-  --shadow-card:
-    0 1px 2px 0 rgb(20 33 61 / 0.04), 0 4px 12px 0 rgb(20 33 61 / 0.06);
-  --shadow-card-hover:
-    0 2px 4px 0 rgb(20 33 61 / 0.06), 0 8px 20px 0 rgb(20 33 61 / 0.1);
+  --radius-card: 1.125rem;
+  --radius-ctl: 0.625rem;
+  --radius-opt: 0.75rem;
+  --radius-screen: 1.5rem;
 }
 
-@layer base {
-  body {
-    @apply font-sans text-[15px] antialiased;
-    background-color: var(--color-background);
-    color: var(--color-navy);
-  }
+/* Tipografías: Atkinson Hyperlegible Next (por defecto), Lexend, Arial, Verdana o la del sistema. */
+:root {
+  --app-font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --lh: 1.5;
+}
+html[data-font="lexend"] { --app-font: "Lexend Variable", "Lexend", system-ui, sans-serif; }
+html[data-font="arial"] { --app-font: Arial, Helvetica, sans-serif; }
+html[data-font="verdana"] { --app-font: Verdana, Geneva, sans-serif; }
+html[data-font="sistema"] { --app-font: system-ui, -apple-system, "Segoe UI", sans-serif; }
 
-  h1,
-  h2,
-  h3 {
-    @apply font-heading font-bold;
-    color: var(--color-navy);
-  }
+html { font-size: 16px; }
 
-  h1 {
-    @apply text-[28px] leading-tight;
-  }
-  h2 {
-    @apply text-[20px] leading-tight;
-  }
-  h3 {
-    @apply text-[16px] leading-tight font-semibold;
-  }
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-body);
+  font-family: var(--app-font);
+  line-height: var(--lh);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer components {
-  /* Botones */
-  .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors;
-    background-color: var(--color-primary);
-  }
-  .btn-primary:hover {
-    filter: brightness(0.92);
-  }
+h1, h2, h3, h4 { color: var(--color-strong); margin: 0; }
+h1 { font-weight: 800; font-size: 2.25rem; line-height: 1.15; }
+h2 { font-weight: 700; font-size: 1.5rem; line-height: 1.25; }
+h3 { font-weight: 700; font-size: 1.1875rem; line-height: 1.3; }
+h4 { font-weight: 700; font-size: 1rem; line-height: 1.4; }
+p { margin: 0; }
+.prose-vl { max-width: 70ch; }
 
-  .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium transition-colors;
-    color: var(--color-navy);
-    border-color: var(--color-navy);
-  }
-  .btn-secondary:hover {
-    background-color: var(--color-background);
-  }
-
-  /* Badges de acento VARK */
-  .badge {
-    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide;
-  }
-  .badge-blue {
-    background-color: var(--color-accent-blue-light);
-    color: #1e4fbe;
-  }
-  .badge-teal {
-    background-color: var(--color-accent-teal-light);
-    color: #136b70;
-  }
-  .badge-coral {
-    background-color: var(--color-accent-coral-light);
-    color: #9c3b2e;
-  }
-  .badge-amber {
-    background-color: var(--color-accent-amber-light);
-    color: #8a5417;
-  }
-  .badge-success {
-    background-color: var(--color-success-light);
-    color: var(--color-success);
-  }
-  .badge-neutral {
-    background-color: var(--color-background);
-    color: var(--color-text-secondary);
-  }
-
-  /* Tarjeta de curso */
-  .card {
-    @apply rounded-xl bg-white p-5 shadow-card transition-all duration-300 ease-out;
-    border: 1px solid var(--color-border);
-  }
-  .card:hover {
-    @apply shadow-card-hover;
-    border-color: color-mix(
-      in srgb,
-      var(--color-navy) 18%,
-      var(--color-border)
-    );
-  }
-
-  /* Tarjeta con imagen a sangre (sin padding): la imagen queda a ras del borde,
-     recortada por el mismo radio del contenedor, sin doble marco */
-  .card-media {
-    @apply overflow-hidden rounded-xl bg-white shadow-card transition-all duration-300 ease-out;
-    border: 1px solid var(--color-border);
-  }
-  .card-media:hover {
-    @apply shadow-card-hover;
-    border-color: color-mix(
-      in srgb,
-      var(--color-navy) 18%,
-      var(--color-border)
-    );
-  }
-
-  /* Contenedor estático (listas, tablas): mismo look que .card, sin hover propio */
-  .panel {
-    @apply rounded-xl bg-white shadow-card;
-    border: 1px solid var(--color-border);
-  }
-
-  /* Barra de progreso */
-  .progress-track {
-    @apply h-1.5 w-full overflow-hidden rounded-full;
-    background-color: var(--color-border);
-  }
-  .progress-fill {
-    @apply h-full rounded-full transition-all duration-700;
-    background-color: var(--color-primary);
-  }
+/* Contraste reforzado: texto negro, bordes oscuros, sin invertir colores. */
+html[data-contrast="high"] {
+  --color-strong: #000000;
+  --color-body: #000000;
+  --color-muted: #1e293b;
+  --color-line: #334155;
+  --color-track: #94a3b8;
+  --color-primary-100: #ffffff;
+  --color-tutor-100: #ffffff;
+  --color-subtle: #ffffff;
 }
+html[data-contrast="high"] .vl-card,
+html[data-contrast="high"] .vl-input,
+html[data-contrast="high"] .vl-opt { border-width: 2px; }
+
+/* Foco visible: halo doble lavanda en toda la interfaz (también sobre el menú oscuro). */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--color-primary-300);
+  border-radius: 0.5rem;
+}
+.on-dark :focus-visible {
+  outline-color: #ffffff;
+  box-shadow: 0 0 0 5px var(--color-primary-300);
+}
+
+/* Movimiento reducido: sistema operativo o preferencia guardada. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+html[data-motion="reduce"] *, html[data-motion="reduce"] *::before, html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important; transition-duration: 0.001ms !important;
+}
+
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* Animaciones suaves (se anulan con movimiento reducido). */
+@keyframes vl-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.vl-in { animation: vl-in 0.2s ease-out; }
+@keyframes vl-spin { to { transform: rotate(360deg); } }
+.vl-spin { animation: vl-spin 0.9s linear infinite; }
+
+/* Contenido de lecciones (texto estructurado). */
+.lesson-text h2 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.lesson-text p, .lesson-text li { max-width: 70ch; }
+.lesson-text p + p { margin-top: 0.75rem; }
+.lesson-text ul, .lesson-text ol { padding-left: 1.25rem; margin: 0.5rem 0; }
+.lesson-text img { max-width: 100%; border-radius: 0.75rem; }
+
+/* Perfil motor: objetivos táctiles más grandes (RF-021). */
+html[data-targets="large"] button,
+html[data-targets="large"] a.vl-btn,
+html[data-targets="large"] .vl-input,
+html[data-targets="large"] [role="radio"],
+html[data-targets="large"] [role="switch"] { min-height: 3.5rem; }
+html[data-targets="large"] .vl-nav-item { min-height: 3.5rem; }
