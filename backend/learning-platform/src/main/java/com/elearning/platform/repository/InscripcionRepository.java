@@ -18,4 +18,9 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
     List<Inscripcion> delEstudiante(@Param("estudianteId") Long estudianteId);
 
     List<Inscripcion> findByCursoIdAndEstadoIn(Long cursoId, java.util.Collection<EstadoInscripcion> estados);
+
+    /** Para informes: todas las inscripciones con estudiante, curso e instructor cargados. */
+    @Query("select i from Inscripcion i join fetch i.estudiante e join fetch i.curso c join fetch c.instructor "
+            + "order by c.titulo, e.nombre")
+    List<Inscripcion> conDetalle();
 }
