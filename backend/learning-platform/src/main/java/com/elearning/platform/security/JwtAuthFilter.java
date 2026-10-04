@@ -86,7 +86,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (u == null) return Optional.empty();
         boolean habilitado = u.getEstado() == EstadoUsuario.ACTIVO
                 || u.getEstado() == EstadoUsuario.PENDIENTE_PRIMER_ACCESO;
-        if (!habilitado) return Optional.empty();
+        if (!habilitado || u.estaBloqueadoTemporalmente()) return Optional.empty();
         return Optional.of(new UsuarioPrincipal(u.getId(), u.getCorreoInstitucional(), u.getNombre(), u.getRol(), sesionId));
     }
 }

@@ -61,13 +61,21 @@ public abstract class Usuario {
         if (fechaCreacion == null) fechaCreacion = LocalDateTime.now();
     }
 
+    /**
+     * Bloqueo temporal. Si la cuenta está en primer acceso conserva ese estado
+     * (para no saltarse el cambio de contraseña) y el bloqueo lo da bloqueadoHasta.
+     */
     public void bloquear(LocalDateTime hasta) {
-        this.estado = EstadoUsuario.BLOQUEADO;
+        if (this.estado == EstadoUsuario.ACTIVO) {
+            this.estado = EstadoUsuario.BLOQUEADO;
+        }
         this.bloqueadoHasta = hasta;
     }
 
     public void desbloquear() {
-        this.estado = EstadoUsuario.ACTIVO;
+        if (this.estado == EstadoUsuario.BLOQUEADO) {
+            this.estado = EstadoUsuario.ACTIVO;
+        }
         this.bloqueadoHasta = null;
         this.intentosFallidos = 0;
     }

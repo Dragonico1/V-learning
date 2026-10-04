@@ -47,6 +47,19 @@ public class NotificacionService {
         return Optional.of(notificaciones.save(n));
     }
 
+    /** Intenta el correo primero (p. ej. aviso de bloqueo); si falla, queda en la plataforma. */
+    @Transactional
+    public Optional<Notificacion> notificarPorCorreo(Usuario usuario, String titulo, String mensaje) {
+        CanalNotificacion canal = correo.enviar(usuario.getCorreoInstitucional(), titulo, mensaje)
+                ? CanalNotificacion.CORREO : CanalNotificacion.PLATAFORMA;
+        Notificacion n = new Notificacion();
+        n.setUsuario(usuario);
+        n.setTitulo(titulo);
+        n.setMensaje(mensaje);
+        n.setCanal(canal);
+        return Optional.of(notificaciones.save(n));
+    }
+
     @Transactional
     public Optional<Notificacion> notificar(Long usuarioId, String titulo, String mensaje, boolean obligatoria) {
         return usuarios.findById(usuarioId).flatMap(u -> notificar(u, titulo, mensaje, obligatoria));
