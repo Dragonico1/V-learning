@@ -18,4 +18,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>, JpaSpec
     List<Usuario> findByRolAndEstado(RolUsuario rol, EstadoUsuario estado);
 
     List<Usuario> findByRol(RolUsuario rol);
+
+    long countByRol(RolUsuario rol);
+
+    long countByRolAndEstado(RolUsuario rol, EstadoUsuario estado);
 }

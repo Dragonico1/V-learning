@@ -15,4 +15,6 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     @Query("select c from Curso c join fetch c.instructor where c.instructor.id = :instructorId order by c.fechaCreacion desc")
     List<Curso> delInstructor(@Param("instructorId") Long instructorId);
+
+    long countByEstado(com.elearning.platform.enums.EstadoCurso estado);
 }

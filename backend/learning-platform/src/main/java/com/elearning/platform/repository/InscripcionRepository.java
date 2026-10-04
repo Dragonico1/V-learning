@@ -23,4 +23,9 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
     @Query("select i from Inscripcion i join fetch i.estudiante e join fetch i.curso c join fetch c.instructor "
             + "order by c.titulo, e.nombre")
     List<Inscripcion> conDetalle();
+
+    @Query("select avg(i.porcentajeCompletado) from Inscripcion i where i.estado <> com.elearning.platform.enums.EstadoInscripcion.CANCELADA")
+    java.math.BigDecimal promedioAvance();
+
+    long countByEstado(EstadoInscripcion estado);
 }
