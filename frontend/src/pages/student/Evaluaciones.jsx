@@ -33,9 +33,10 @@ export default function Evaluaciones() {
   const iniciar = async (e) => {
     setIniciando(e.id);
     try {
-      if (e.intentoEnProgresoId) { nav(`/intentos/${e.intentoEnProgresoId}`); return; }
+      // El servidor reanuda el intento en curso si existe, así que siempre se llama a iniciar.
       const intento = await api.evaluaciones.iniciar(e.id);
-      nav(`/intentos/${intento.id}`);
+      try { sessionStorage.setItem(`vl.eval.${intento.id}`, String(e.id)); } catch { /* sin almacenamiento */ }
+      nav(`/intentos/${intento.id}`, { state: { intento } });
     } catch (err) { avisar(mensajeError(err), "error"); } finally { setIniciando(null); }
   };
 
