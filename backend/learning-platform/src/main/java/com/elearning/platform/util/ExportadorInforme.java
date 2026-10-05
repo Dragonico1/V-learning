@@ -34,7 +34,7 @@ public final class ExportadorInforme {
             CellStyle cabecera = libro.createCellStyle();
             cabecera.cloneStyleFrom(negrita);
             cabecera.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            cabecera.setFillPattern(FillPatternType.SOLID);
+            cabecera.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             int r = 0;
             Row titulo = hoja.createRow(r++);
