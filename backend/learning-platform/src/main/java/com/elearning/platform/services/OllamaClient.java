@@ -25,7 +25,7 @@ public class OllamaClient {
 
     public OllamaClient(OllamaProperties props) {
         this.props = props;
-        HttpClient cliente = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        HttpClient cliente = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(5)).build();
         JdkClientHttpRequestFactory fabrica = new JdkClientHttpRequestFactory(cliente);
         fabrica.setReadTimeout(Duration.ofSeconds(props.timeoutSegundos()));
         this.http = RestClient.builder().baseUrl(props.url()).requestFactory(fabrica).build();
@@ -52,7 +52,7 @@ public class OllamaClient {
                     .retrieve().body(JsonNode.class);
             return r == null ? "" : r.path("message").path("content").asText("");
         } catch (RuntimeException e) {
-            log.warn("Ollama no respondió: {}", e.getMessage());
+            log.warn("Ollama no respondió (url={}, modelo={}): {}", props.url(), props.model(), e.toString());
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "TUTOR_NO_DISPONIBLE",
                     "El tutor no está disponible en este momento. Intenta de nuevo en unos minutos o escribe a tu instructor.");
         }
