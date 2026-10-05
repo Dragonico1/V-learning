@@ -193,6 +193,8 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
+Vite redirige `/api` y `/ws` a `http://localhost:8080` (proxy en `vite.config.js`), así que no hay que configurar CORS en desarrollo. Para producción: `npm run build` genera `frontend/dist`, que se sirve con cualquier servidor estático detrás del mismo dominio que la API.
+
 ### 6.4 Tutor de IA (Ollama)
 
 ```bash
@@ -481,7 +483,9 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Filtro de entradas maliciosas:** el cuerpo de un contenido que incluya `<script` o patrones de inyección SQL se rechaza (RF-013). Si un instructor necesita mostrar código, debe escribirlo sin esas secuencias.
 - **Ranking:** se recalcula por curso a partir de la actividad (periodo `ACUMULADO`) al ocurrir un evento y si tiene más de 10 minutos.
 - **Restablecer accesibilidad:** vuelve a los valores por defecto de las categorías que la persona tiene activas, no a cero.
-- **Endpoints adicionales a los de la sección 10:** `GET/PUT /vark/metodos`, `POST /accesibilidad/previsualizar`, `GET /accesibilidad/temas`, `POST /instructor/cursos/{id}/archivar`, `GET /contenidos/{id}/conformidad`, `POST /contenidos/{id}/despublicar`, `GET /contenidos/{id}/recursos`, `DELETE /recursos/{id}`, `PUT /modulos/{id}`, `PUT/DELETE /evaluaciones/{id}`, `POST /mensajes/{id}/ocultar` (moderación), `POST /informes/vista` (vista previa del informe, mensaje «sin datos») y `GET /notificaciones/preferencias`.
+- **Tipo de respuesta del Tutor IA:** `EXPLICACION`/`EJEMPLO`/`ACTIVIDAD`/`RESUMEN` se infiere de palabras clave de la pregunta; el Tutor no usa el estilo VARK ni el historial de las últimas interacciones.
+- **Limitaciones conocidas:** el instructor no puede leer las preguntas ya creadas de una evaluación (no hay GET), por lo que el formulario de edición no precarga puntaje, tiempo ni descripción; las preferencias de accesibilidad de instructor y administrador se guardan solo en el navegador; el administrador filtra informes por ID de estudiante.
+- **Endpoints adicionales a los de la sección 10:** `GET /admin/cursos`, `GET/PUT /vark/metodos`, `POST /accesibilidad/previsualizar`, `GET /accesibilidad/temas`, `POST /instructor/cursos/{id}/archivar`, `GET /contenidos/{id}/conformidad`, `POST /contenidos/{id}/despublicar`, `GET /contenidos/{id}/recursos`, `DELETE /recursos/{id}`, `PUT /modulos/{id}`, `PUT/DELETE /evaluaciones/{id}`, `POST /mensajes/{id}/ocultar` (moderación), `POST /informes/vista` (vista previa del informe, mensaje «sin datos») y `GET /notificaciones/preferencias`.
 
 ### Estado de verificación (léelo antes de ejecutar)
 
@@ -490,6 +494,8 @@ El backend se escribió en un entorno **sin acceso a Maven Central**, por lo que
 - Sintaxis de todos los `.java` con un analizador independiente y cruce de imports entre clases del proyecto (0 errores).
 - Nombres de propiedades de las consultas JPQL y de los métodos derivados de los repositorios contra las entidades (0 hallazgos reales).
 - Ejecución real (`javac` + `java`) de la lógica pura: `TextoApoyo`, `ContrasteWcag` y `CorreccionEvaluacion` (12 pruebas pasan).
+
+Del **frontend** se comprobó: `eslint` sin errores, `vite build` correcto y una prueba de humo en Chromium (Playwright) que abre las 31 pantallas de los tres roles con respuestas de API simuladas, sin errores de consola, y recorre el inicio de una evaluación. **No** se probó contra el backend real.
 
 Lo que **no** se comprobó y puede fallar al primer arranque: cableado de Spring (beans, seguridad), mapeos JPA/Hibernate contra el esquema, comportamiento de SQL Server, WebSocket, generación de PDF (OpenPDF) y Excel (POI), y las llamadas reales a Ollama. Ejecuta `./mvnw clean package` y, si hay errores de compilación o de arranque, pégalos para corregirlos. Las pruebas `PoliticaPasswordTest` y `TutorServiceTest` requieren el classpath de Spring y solo correrán con Maven.
 
