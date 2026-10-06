@@ -86,7 +86,8 @@ public class InstructorCursoService {
             }
             List<EvaluacionItem> evs = evalPorModulo.getOrDefault(m.getId(), List.of()).stream()
                     .map(e -> new EvaluacionItem(e.getId(), e.getTitulo(), e.getTipo(), e.isAlternativaAccesible(),
-                            e.isAlternativaAccesible() ? null : "Falta la alternativa accesible para perfil motor."))
+                            e.isAlternativaAccesible() ? null : "Falta la alternativa accesible para perfil motor.",
+                            e.getFechaLimite(), e.getPuntajeMaximo(), e.getTiempoLimite(), e.getDescripcion()))
                     .toList();
             items.add(new ModuloItem(m.getId(), m.getTitulo(), m.getDescripcion(), m.getOrden(), false, false, cis, evs));
         }
@@ -215,7 +216,8 @@ public class InstructorCursoService {
         Curso curso = c.getModulo().getCurso();
         if (!eraVisible && curso.getEstado() == EstadoCurso.PUBLICADO) {
             notificaciones.notificarInscritos(curso.getId(), "Nuevo contenido: " + c.getTitulo(),
-                    "Hay un contenido nuevo en «" + curso.getTitulo() + "» (módulo " + c.getModulo().getTitulo() + "): «" + c.getTitulo() + "».");
+                    "Hay un contenido nuevo en «" + curso.getTitulo() + "» (módulo " + c.getModulo().getTitulo() + "): «" + c.getTitulo() + "».",
+                    "/cursos/" + curso.getId() + "#m-" + c.getModulo().getId());
         }
         return new PublicacionRespuesta(c.getId(), true, ConformidadAccesibilidad.advertencias(c));
     }

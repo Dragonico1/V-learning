@@ -55,11 +55,11 @@ public class GamificacionService {
         p.agregarPuntos(puntos);
         p.setNivel(EventosGamificacion.nivelPara(p.getPuntos()));
         perfiles.save(p);
-        notificaciones.notificar(estudianteId, "Ganaste " + puntos + " puntos", motivo, false);
+        notificaciones.notificar(estudianteId, "Ganaste " + puntos + " puntos", motivo, false, "/logros");
 
         if (p.getNivel() > nivelAntes) {
             notificaciones.notificar(estudianteId, "¡Subiste al nivel " + p.getNivel() + "!",
-                    "Llevas " + p.getPuntos() + " puntos. Sigue así.", false);
+                    "Llevas " + p.getPuntos() + " puntos. Sigue así.", false, "/logros");
         }
         Set<Long> yaTiene = obtenidas.findByPerfilGamificacionId(p.getId()).stream()
                 .map(InsigniaObtenida::getInsigniaId).collect(Collectors.toSet());
@@ -70,7 +70,7 @@ public class GamificacionService {
                 o.setInsigniaId(ins.getId());
                 obtenidas.save(o);
                 notificaciones.notificar(estudianteId, "Nueva insignia: " + ins.getNombre(),
-                        ins.getDescripcion() == null ? "Desbloqueaste una insignia." : ins.getDescripcion(), false);
+                        ins.getDescripcion() == null ? "Desbloqueaste una insignia." : ins.getDescripcion(), false, "/logros");
             }
         }
     }

@@ -192,6 +192,8 @@ CREATE TABLE evaluaciones (
     -- [EXT] RF-021 / HU-022: 0 = la actividad (p. ej. arrastrar y soltar) aún no tiene
     --       alternativa accesible; se excluye de la calificación para perfil motor.
     alternativa_accesible BIT NOT NULL DEFAULT 1,
+    -- [EXT] Fecha limite para iniciar la evaluacion (igual que las tareas). NULL = sin limite.
+    fecha_limite DATETIME2(6) NULL,
     CONSTRAINT ck_evaluacion_puntaje CHECK (puntaje_maximo >= 0),
     CONSTRAINT ck_evaluacion_tiempo CHECK (tiempo_limite IS NULL OR tiempo_limite > 0),
     CONSTRAINT fk_evaluacion_modulo FOREIGN KEY (modulo_id)
@@ -540,6 +542,16 @@ CREATE TABLE mensajes (
     contenido VARCHAR(MAX) NOT NULL,
     fecha_envio DATETIME2(6) NOT NULL DEFAULT SYSDATETIME(),
     estado VARCHAR(50) NOT NULL,
+    -- [EXT] Moderacion por el instructor: cuando y quien resolvio el reporte (ELIMINADO / MANTENIDO).
+    fecha_reporte DATETIME2(6) NULL,
+    moderador_id BIGINT NULL,
+    fecha_moderacion DATETIME2(6) NULL,
+    resolucion VARCHAR(30) NULL,
+    CONSTRAINT ck_mensajes_resolucion CHECK (resolucion IS NULL OR resolucion IN ('ELIMINADO', 'MANTENIDO')),
+    CONSTRAINT fk_mensaje_moderador FOREIGN KEY (moderador_id)
+        REFERENCES usuarios(id)
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
     -- [EXT] RF-010: estados válidos; REPORTADO = reporte de contenido inapropiado.
     CONSTRAINT ck_mensajes_estado CHECK (estado IN ('ENVIADO', 'REPORTADO', 'BLOQUEADO', 'OCULTO')),
     CONSTRAINT fk_mensaje_usuario FOREIGN KEY (usuario_id)
@@ -550,6 +562,23 @@ CREATE TABLE mensajes (
         REFERENCES cursos(id)
         ON UPDATE NO ACTION
         ON DELETE CASCADE
+);
+GO
+-- ================================================================
+CREATE TABLE reportes_mensaje (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    mensaje_id BIGINT NOT NULL,
+    reportante_id BIGINT NOT NULL,
+    fecha DATETIME2(6) NOT NULL DEFAULT SYSDATETIME(),
+    CONSTRAINT uq_reporte_mensaje_reportante UNIQUE (mensaje_id, reportante_id),
+    CONSTRAINT fk_reporte_mensaje FOREIGN KEY (mensaje_id)
+        REFERENCES mensajes(id)
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT fk_reporte_reportante FOREIGN KEY (reportante_id)
+        REFERENCES usuarios(id)
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 );
 GO
 -- ================================================================
@@ -564,6 +593,8 @@ CREATE TABLE notificaciones (
     leida BIT NOT NULL DEFAULT 0,
     -- [EXT] RF-011: "Posponer el recordatorio"; no se muestra hasta esta fecha.
     pospuesta_hasta DATETIME2(6) NULL,
+    -- [EXT] Ruta de la aplicacion a la que lleva el boton "Ir" (p. ej. /logros). NULL = sin destino.
+    enlace VARCHAR(300) NULL,
     CONSTRAINT fk_notificacion_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id)
         ON UPDATE NO ACTION
@@ -712,6 +743,10 @@ GO
 -- ================================================================
 -- ÍNDICES SECUNDARIOS
 -- ================================================================
+CREATE INDEX idx_mensajes_curso_estado ON mensajes (curso_id, estado, fecha_envio);
+GO
+CREATE INDEX idx_reportes_mensaje ON reportes_mensaje (mensaje_id);
+GO
 CREATE INDEX idx_cursos_instructor ON cursos (instructor_id);
 GO
 CREATE INDEX idx_cursos_estado ON cursos (estado);

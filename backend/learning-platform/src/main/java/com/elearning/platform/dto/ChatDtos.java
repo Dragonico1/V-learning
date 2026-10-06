@@ -13,6 +13,11 @@ public final class ChatDtos {
 
     public record MensajeRequest(@NotBlank(message = "Escribe un mensaje.") String contenido) {}
 
+    /** Mensaje reportado pendiente de la decisión del instructor. */
+    public record MensajeReportado(Long id, Long cursoId, String curso, Long autorId, String autor, RolUsuario rolAutor,
+                                   String contenido, LocalDateTime fechaEnvio, LocalDateTime fechaReporte,
+                                   java.util.List<String> reportadoPor) {}
+
     public record MensajeDto(Long id, Long cursoId, Long usuarioId, String autor, RolUsuario rol, String contenido,
                              LocalDateTime fechaEnvio, EstadoMensaje estado) {}
 }

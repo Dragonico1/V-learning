@@ -49,7 +49,7 @@ public class RetroalimentacionService {
             notificaciones.notificarUnaVezAlDia(evaluacion.getModulo().getCurso().getInstructor().getId(),
                     "Faltan recursos de refuerzo en «" + evaluacion.getModulo().getTitulo() + "»",
                     "Un estudiante obtuvo un resultado " + clase + " en «" + evaluacion.getTitulo()
-                            + "» y el módulo no tiene contenidos publicados para reforzar.");
+                            + "» y el módulo no tiene contenidos publicados para reforzar.", "/cursos/" + evaluacion.getModulo().getCurso().getId() + "/editar");
             return new Retro(clase, "Repasa los apuntes del módulo e inténtalo de nuevo cuando te sientas listo o lista. "
                     + "Avisamos al equipo para que agregue más materiales de apoyo.", List.of());
         }

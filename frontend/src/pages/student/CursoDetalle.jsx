@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Circle, PlayCircle } from "lucide-react";
 import { api } from "../../api/client.js";
 import { useAsync } from "../../utils/useAsync.js";
-import { ESTADO_PROGRESO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO, VARK } from "../../utils/format.js";
+import { ESTADO_PROGRESO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO, VARK, fmtFecha } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, ProgressBar } from "../../components/ui/index.jsx";
 import TareasDelModulo from "./TareasDelModulo.jsx";
 
@@ -54,7 +54,7 @@ export default function CursoDetalle() {
               {m.evaluaciones.map((e) => (
                 <li key={`e${e.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-opt border border-dashed border-primary-300 bg-primary-100/40 p-3">
                   <div className="flex items-center gap-3"><ClipboardCheck size={22} aria-hidden="true" className="text-primary-600" />
-                    <div><p className="font-bold text-strong">{e.titulo}</p><p className="text-sm">{TIPO_EVAL_TEXTO[e.tipo]}{e.aviso ? ` · ${e.aviso}` : ""}</p></div></div>
+                    <div><p className="font-bold text-strong">{e.titulo}</p><p className="text-sm">{TIPO_EVAL_TEXTO[e.tipo]}{e.fechaLimite ? ` · Límite: ${fmtFecha(e.fechaLimite)}` : ""}{e.aviso ? ` · ${e.aviso}` : ""}</p></div></div>
                   <Button variante="secondary" to="/evaluaciones">Ver evaluaciones</Button>
                 </li>
               ))}

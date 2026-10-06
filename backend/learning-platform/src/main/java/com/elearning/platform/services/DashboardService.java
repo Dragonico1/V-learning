@@ -35,6 +35,8 @@ public class DashboardService {
     private final EvaluacionRepository evaluaciones;
     private final CursoRepository cursos;
     private final PerfilAprendizajeRepository perfiles;
+    private final TareaRepository tareas;
+    private final EntregaTareaRepository entregas;
 
     @Transactional(readOnly = true)
     public DashboardRespuesta dashboard(Long estudianteId) {
@@ -43,7 +45,11 @@ public class DashboardService {
         List<Progreso> prog = progresos.delEstudianteConCurso(estudianteId);
         List<IntentoEvaluacion> finalizados = intentos.finalizadosDelEstudiante(estudianteId);
 
-        boolean sinActividad = prog.isEmpty() && finalizados.isEmpty();
+        Set<Long> cursosVigentes = insc.stream().map(i -> i.getCurso().getId()).collect(Collectors.toSet());
+        List<EntregaTarea> misEntregas = entregas.delEstudiante(estudianteId).stream()
+                .filter(e -> cursosVigentes.contains(e.getTarea().getModulo().getCurso().getId())).toList();
+
+        boolean sinActividad = prog.isEmpty() && finalizados.isEmpty() && misEntregas.isEmpty();
         List<CursoResumen> sugeridos = sinActividad ? cursosParaEmpezar(insc) : List.of();
 
         // --- avance por curso
@@ -71,7 +77,17 @@ public class DashboardService {
                     .max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
             mejorPct.put(e.getId(), mejor);
             califs.add(new Calificacion(e.getId(), e.getTitulo(), e.getModulo().getCurso().getTitulo(), mejor,
-                    lista.size(), CorreccionEvaluacion.clasificar(mejor)));
+                    lista.size(), CorreccionEvaluacion.clasificar(mejor), "EVALUACION"));
+        }
+        // Las tareas calificadas por el instructor también suman a la nota (porcentaje sobre su puntaje máximo).
+        long tareasCalificadas = 0;
+        for (EntregaTarea et : misEntregas) {
+            if (et.getEstado() != EstadoEntrega.CALIFICADA || et.getPuntaje() == null) continue;
+            Tarea t = et.getTarea();
+            BigDecimal pct = CorreccionEvaluacion.porcentaje(et.getPuntaje(), t.getPuntajeMaximo());
+            califs.add(new Calificacion(t.getId(), t.getTitulo(), t.getModulo().getCurso().getTitulo(), pct, 1,
+                    CorreccionEvaluacion.clasificar(pct), "TAREA"));
+            tareasCalificadas++;
         }
         BigDecimal promedio = califs.isEmpty() ? BigDecimal.ZERO
                 : califs.stream().map(Calificacion::mejorPorcentaje).reduce(BigDecimal.ZERO, BigDecimal::add)
@@ -95,16 +111,25 @@ public class DashboardService {
             List<Contenido> publicados = contenidos.findByModuloIdInAndPublicadoTrueOrderByIdAsc(moduloDe.keySet());
             for (Evaluacion e : evaluaciones.findByModuloIdInOrderByIdAsc(moduloDe.keySet())) {
                 if (!porEvaluacion.containsKey(e.getId())) {
-                    pendientes.add(new Pendiente("EVALUACION", e.getId(), e.getTitulo(), e.getModulo().getCurso().getTitulo()));
+                    pendientes.add(new Pendiente("EVALUACION", e.getId(), e.getTitulo(), e.getModulo().getCurso().getTitulo(),
+                            e.getModulo().getCurso().getId(), e.getModulo().getId()));
+                }
+            }
+            Set<Long> tareasEntregadas = misEntregas.stream().map(et -> et.getTarea().getId()).collect(Collectors.toSet());
+            for (Tarea t : tareas.deLosModulos(moduloDe.keySet())) {
+                if (!tareasEntregadas.contains(t.getId())) {
+                    pendientes.add(new Pendiente("TAREA", t.getId(), t.getTitulo(), t.getModulo().getCurso().getTitulo(),
+                            t.getModulo().getCurso().getId(), t.getModulo().getId()));
                 }
             }
             for (Contenido c : publicados) {
                 if (!completadosIds.contains(c.getId())) {
-                    pendientes.add(new Pendiente("CONTENIDO", c.getId(), c.getTitulo(), c.getModulo().getCurso().getTitulo()));
+                    pendientes.add(new Pendiente("CONTENIDO", c.getId(), c.getTitulo(), c.getModulo().getCurso().getTitulo(),
+                            c.getModulo().getCurso().getId(), c.getModulo().getId()));
                 }
             }
             // --- sugerencias: módulos con la evaluación de menor porcentaje (< 85) primero
-            List<Calificacion> peores = califs.stream().filter(c -> c.mejorPorcentaje().compareTo(CorreccionEvaluacion.UMBRAL_EXCELENTE) < 0)
+            List<Calificacion> peores = califs.stream().filter(c -> "EVALUACION".equals(c.tipo()) && c.mejorPorcentaje().compareTo(CorreccionEvaluacion.UMBRAL_EXCELENTE) < 0)
                     .sorted(Comparator.comparing(Calificacion::mejorPorcentaje)).toList();
             for (Calificacion c : peores) {
                 Evaluacion e = evaluaciones.findById(c.evaluacionId()).orElse(null);
@@ -128,7 +153,7 @@ public class DashboardService {
         }
 
         Totales totales = new Totales(prog.stream().mapToLong(Progreso::getTiempoConsumido).sum(),
-                prog.stream().filter(p -> p.getEstado() == EstadoProgreso.COMPLETADO).count(), finalizados.size(), promedio);
+                prog.stream().filter(p -> p.getEstado() == EstadoProgreso.COMPLETADO).count(), finalizados.size(), promedio, tareasCalificadas);
         return new DashboardRespuesta(sinActividad, sinActividad ? MENSAJE_MOTIVADOR : null, totales, cursosProg, califs,
                 pendientes, sugerencias, sugeridos);
     }

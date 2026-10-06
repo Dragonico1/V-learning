@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, mensajeError } from "../../api/client.js";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
-import { TIPO_EVAL_TEXTO, fmtPct } from "../../utils/format.js";
+import { TIPO_EVAL_TEXTO, fmtFecha, fmtPct } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, Vacio } from "../../components/ui/index.jsx";
 import TareaEstudianteCard from "../../components/TareaEstudianteCard.jsx";
 import VolverACursos from "../../components/VolverACursos.jsx";
@@ -62,6 +62,7 @@ export default function Evaluaciones() {
                     <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                       <Badge tono="primario">{TIPO_EVAL_TEXTO[e.tipo]}</Badge>
                       {e.tiempoLimiteMinutos ? <span>{e.tiempoLimiteMinutos} min</span> : <span>Sin límite de tiempo</span>}
+                      {e.fechaLimite && (e.vencida ? <Badge tono="err">Plazo vencido</Badge> : <span>Fecha límite: {fmtFecha(e.fechaLimite)}</span>)}
                       <span>{e.intentos} intento(s)</span>
                       {e.mejorPorcentaje != null && <span>Mejor resultado: {fmtPct(e.mejorPorcentaje)}</span>}
                     </p>

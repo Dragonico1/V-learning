@@ -1,10 +1,12 @@
 package com.elearning.platform.services;
 
 import com.elearning.platform.dto.EvaluacionDtos.*;
+import com.elearning.platform.entity.Curso;
 import com.elearning.platform.entity.Evaluacion;
 import com.elearning.platform.entity.Modulo;
 import com.elearning.platform.entity.OpcionRespuesta;
 import com.elearning.platform.entity.Pregunta;
+import com.elearning.platform.enums.EstadoCurso;
 import com.elearning.platform.enums.ResultadoAuditoria;
 import com.elearning.platform.enums.TipoPregunta;
 import com.elearning.platform.exception.ApiException;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -32,6 +35,9 @@ public class InstructorEvaluacionService {
     private final OpcionRespuestaRepository opciones;
     private final IntentoEvaluacionRepository intentos;
     private final AuditoriaService auditoria;
+    private final NotificacionService notificaciones;
+
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Transactional
     public EvaluacionCreada crear(Long moduloId, Long instructorId, EvaluacionRequest req, String ip) {
@@ -44,6 +50,19 @@ public class InstructorEvaluacionService {
         return aRespuesta(e, 0);
     }
 
+    /**
+     * Avisa a los inscritos de una evaluación nueva. Se llama cuando el instructor termina de armarla
+     * (al agregar la primera pregunta), no al crearla vacía: antes los estudiantes no podrían presentarla.
+     */
+    private void avisarEvaluacionNueva(Evaluacion e) {
+        Curso curso = e.getModulo().getCurso();
+        if (curso.getEstado() != EstadoCurso.PUBLICADO) return;
+        String limite = e.getFechaLimite() == null ? "" : " Fecha límite: " + FECHA.format(e.getFechaLimite()) + ".";
+        notificaciones.notificarInscritos(curso.getId(), "Nueva evaluación: " + e.getTitulo(),
+                "En «" + curso.getTitulo() + "» (módulo " + e.getModulo().getTitulo() + ") hay una evaluación nueva." + limite,
+                "/cursos/" + curso.getId() + "#m-" + e.getModulo().getId());
+    }
+
     @Transactional
     public EvaluacionCreada actualizar(Long evaluacionId, Long instructorId, EvaluacionRequest req, String ip) {
         Evaluacion e = propia(evaluacionId, instructorId);
@@ -53,6 +72,7 @@ public class InstructorEvaluacionService {
                     || e.getPuntajeMaximo().compareTo(req.puntajeMaximo()) != 0
                     || !java.util.Objects.equals(e.getTiempoLimite(), req.tiempoLimite())
                     || !java.util.Objects.equals(e.getDescripcion(), req.descripcion());
+            e.setFechaLimite(req.fechaLimite()); // ampliar o quitar el plazo siempre es posible
             if (cambiaOtraCosa) {
                 throw ApiException.conflicto("EVALUACION_CON_INTENTOS",
                         "Esta evaluación ya tiene intentos: solo puedes cambiar si tiene alternativa accesible.");
@@ -83,6 +103,7 @@ public class InstructorEvaluacionService {
             throw ApiException.conflicto("EVALUACION_CON_INTENTOS", "Esta evaluación ya tiene intentos: no se pueden agregar preguntas.");
         }
         validarOpciones(req);
+        boolean primera = preguntas.findByEvaluacionIdOrderByOrden(evaluacionId).isEmpty();
         int orden = req.orden() != null ? req.orden() : preguntas.maxOrden(evaluacionId) + 1;
         if (preguntas.existsByEvaluacionIdAndOrden(evaluacionId, orden)) {
             throw ApiException.conflicto("ORDEN_DUPLICADO", "Ya hay una pregunta en la posición " + orden + ".");
@@ -102,6 +123,7 @@ public class InstructorEvaluacionService {
             opciones.save(op);
         }
         auditoria.registrar(instructorId, "PREGUNTA_CREADA", "preguntas/" + p.getId(), ResultadoAuditoria.PERMITIDO, ip);
+        if (primera) avisarEvaluacionNueva(e);
         return new PreguntaCreada(p.getId(), p.getOrden(), p.getTipo(), p.getPuntaje());
     }
 
@@ -120,11 +142,12 @@ public class InstructorEvaluacionService {
         e.setPuntajeMaximo(req.puntajeMaximo());
         e.setTiempoLimite(req.tiempoLimite());
         e.setAlternativaAccesible(!Boolean.FALSE.equals(req.alternativaAccesible()));
+        e.setFechaLimite(req.fechaLimite());
     }
 
     private static EvaluacionCreada aRespuesta(Evaluacion e, int preguntas) {
         return new EvaluacionCreada(e.getId(), e.getTitulo(), e.getTipo(), e.getPuntajeMaximo(), e.getTiempoLimite(),
-                e.isAlternativaAccesible(), preguntas);
+                e.isAlternativaAccesible(), preguntas, e.getFechaLimite());
     }
 
     private static void validarOpciones(PreguntaRequest req) {

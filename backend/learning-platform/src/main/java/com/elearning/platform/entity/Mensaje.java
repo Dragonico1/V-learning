@@ -37,6 +37,20 @@ public class Mensaje {
     @Column(nullable = false, length = 50)
     private EstadoMensaje estado = EstadoMensaje.ENVIADO;
 
+    @Column(name = "fecha_reporte")
+    private LocalDateTime fechaReporte;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderador_id")
+    private Usuario moderador;
+
+    @Column(name = "fecha_moderacion")
+    private LocalDateTime fechaModeracion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private ResolucionMensaje resolucion;
+
     @PrePersist
     void antesDeGuardar() {
         if (fechaEnvio == null) fechaEnvio = LocalDateTime.now();

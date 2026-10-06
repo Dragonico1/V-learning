@@ -37,7 +37,7 @@ export default function MiProgreso() {
         <>
           <dl className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[["Tiempo de estudio", fmtDuracion(t.tiempoTotalSegundos)], ["Contenidos completados", fmtNumero(t.contenidosCompletados)],
-              ["Evaluaciones realizadas", fmtNumero(t.evaluacionesRealizadas)], ["Promedio de calificación", t.promedioCalificacion != null ? fmtPct(t.promedioCalificacion) : "—"]].map(([k, v]) => (
+              ["Evaluaciones y tareas calificadas", fmtNumero((t.evaluacionesRealizadas ?? 0) + (t.tareasCalificadas ?? 0))], ["Promedio de calificación", t.promedioCalificacion != null ? fmtPct(t.promedioCalificacion) : "—"]].map(([k, v]) => (
               <Card key={k}><dt className="text-sm">{k}</dt><dd className="text-3xl font-extrabold text-strong">{v}</dd></Card>
             ))}
           </dl>
@@ -64,13 +64,13 @@ export default function MiProgreso() {
           </section>
           <section aria-labelledby="cal">
             <h2 id="cal" className="mb-3 text-xl">Calificaciones</h2>
-            {d.calificaciones.length === 0 ? <p>Aún no has presentado evaluaciones.</p> : (
+            {d.calificaciones.length === 0 ? <p>Aún no has presentado evaluaciones ni tienes tareas calificadas.</p> : (
               <div className="overflow-x-auto rounded-card border border-line bg-surface">
                 <table className="w-full min-w-[620px] text-left">
-                  <caption className="sr-only">Mejor resultado por evaluación</caption>
-                  <thead className="bg-subtle text-sm"><tr><th scope="col" className="p-3">Evaluación</th><th scope="col" className="p-3">Curso</th><th scope="col" className="p-3">Mejor resultado</th><th scope="col" className="p-3">Intentos</th><th scope="col" className="p-3">Clasificación</th></tr></thead>
+                  <caption className="sr-only">Mejor resultado por evaluación y nota de cada tarea calificada; el promedio incluye ambas</caption>
+                  <thead className="bg-subtle text-sm"><tr><th scope="col" className="p-3">Actividad</th><th scope="col" className="p-3">Curso</th><th scope="col" className="p-3">Resultado</th><th scope="col" className="p-3">Intentos</th><th scope="col" className="p-3">Clasificación</th></tr></thead>
                   <tbody>{d.calificaciones.map((c) => (
-                    <tr key={c.evaluacionId} className="border-t border-line"><th scope="row" className="p-3 font-normal">{c.evaluacion}</th><td className="p-3">{c.curso}</td><td className="p-3">{fmtPct(c.mejorPorcentaje)}</td><td className="p-3">{c.intentos}</td>
+                    <tr key={`${c.tipo}-${c.evaluacionId}`} className="border-t border-line"><th scope="row" className="p-3 font-normal">{c.evaluacion} <Badge tono={c.tipo === "TAREA" ? "tutor" : "primario"}>{c.tipo === "TAREA" ? "Tarea" : "Evaluación"}</Badge></th><td className="p-3">{c.curso}</td><td className="p-3">{fmtPct(c.mejorPorcentaje)}</td><td className="p-3">{c.tipo === "TAREA" ? "—" : c.intentos}</td>
                       <td className="p-3"><Badge tono={TONO[c.clasificacion]}>{CLASIFICACION_TEXTO[c.clasificacion]}</Badge></td></tr>
                   ))}</tbody>
                 </table>

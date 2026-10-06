@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { Archive, ArrowLeft, Globe, Pencil, Plus, Trash2 } from "lucide-react";
 import { api, mensajeError } from "../../api/client.js";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
-import { ESTADO_CURSO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO } from "../../utils/format.js";
+import { ESTADO_CURSO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO, fmtFecha } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, Dialogo, EstadoError, PageHeader, Pestanas, TextField, Vacio } from "../../components/ui/index.jsx";
 import ConfirmarDialogo from "../../components/ConfirmarDialogo.jsx";
 import InscribirEstudiantes from "../../components/InscribirEstudiantes.jsx";
@@ -142,6 +142,7 @@ function PestanaEvaluaciones({ curso, recargar }) {
                     <p className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge tono="primario">{TIPO_EVAL_TEXTO[e.tipo]}</Badge>
                       {!e.calificable && <Badge tono="warn">Sin alternativa accesible</Badge>}
+                      {e.fechaLimite && <span className="text-sm">Límite: {fmtFecha(e.fechaLimite)}</span>}
                       {agregadas[e.id] ? <span className="text-sm">{agregadas[e.id]} pregunta(s) agregada(s) en esta sesión</span> : null}
                     </p>
                   </div>
@@ -189,7 +190,16 @@ export default function EditorCurso() {
   const { id } = useParams();
   const { avisar } = useNotif();
   const { datos: curso, cargando, error, recargar } = useAsync(() => api.instructor.curso(id), [id]);
-  const [pestana, setPestana] = useState("contenido");
+  const [params] = useSearchParams();
+  const { hash } = useLocation();
+  const inicial = params.get("pestana");
+  const [pestana, setPestana] = useState(["contenido", "evaluaciones", "estudiantes", "datos"].includes(inicial) ? inicial : "contenido");
+  // Llegar desde una notificación (#m-ID): desplaza hasta el módulo indicado.
+  useEffect(() => {
+    if (!curso || !hash) return;
+    const el = document.getElementById(hash.slice(1));
+    if (el) el.scrollIntoView({ block: "start" });
+  }, [curso, hash, pestana]);
   const [confirmar, setConfirmar] = useState(null); // 'publicar' | 'archivar'
 
   if (cargando && !curso) return <Cargando texto="Cargando el curso…" />;

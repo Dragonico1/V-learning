@@ -58,7 +58,8 @@ public class TareaService {
             String limite = t.getFechaLimite() == null ? "" : " Fecha límite: " + FECHA.format(t.getFechaLimite()) + ".";
             notificaciones.notificarInscritos(m.getCurso().getId(), "Nueva tarea: " + t.getTitulo(),
                     "En «" + m.getCurso().getTitulo() + "» (módulo " + m.getTitulo() + ") hay una tarea calificable de "
-                            + t.getPuntajeMaximo().stripTrailingZeros().toPlainString() + " puntos." + limite);
+                            + t.getPuntajeMaximo().stripTrailingZeros().toPlainString() + " puntos." + limite,
+                    "/cursos/" + m.getCurso().getId() + "#m-" + m.getId());
         }
         return aVistaInstructor(t);
     }
@@ -113,7 +114,8 @@ public class TareaService {
         auditoria.registrar(instructorId, "TAREA_CALIFICADA", "entregas_tarea/" + entregaId, ResultadoAuditoria.PERMITIDO, ip);
         notificaciones.notificar(e.getEstudiante(), NotificacionService.recortar("Tarea calificada: " + t.getTitulo(), 190),
                 "Obtuviste " + e.getPuntaje().stripTrailingZeros().toPlainString() + " de "
-                        + t.getPuntajeMaximo().stripTrailingZeros().toPlainString() + " puntos en «" + t.getTitulo() + "».", false);
+                        + t.getPuntajeMaximo().stripTrailingZeros().toPlainString() + " puntos en «" + t.getTitulo() + "».", false,
+                "/cursos/" + t.getModulo().getCurso().getId() + "#m-" + t.getModulo().getId());
         return new EntregaVista(e.getId(), e.getEstudiante().getId(), e.getEstudiante().getNombre(),
                 e.getEstudiante().getCorreoInstitucional(), e.getTexto(), e.getEnlace(), e.getFechaEntrega(),
                 e.getEstado(), e.getPuntaje(), e.getRetroalimentacion(), e.getFechaCalificacion());
@@ -169,7 +171,8 @@ public class TareaService {
         auditoria.registrar(estudianteId, primera ? "TAREA_ENTREGADA" : "TAREA_REENVIADA", "tareas/" + tareaId, ResultadoAuditoria.PERMITIDO, ip);
         Long instructorId = t.getModulo().getCurso().getInstructor().getId();
         notificaciones.notificarUnaVezAlDia(instructorId, NotificacionService.recortar("Nueva entrega: " + t.getTitulo(), 190),
-                "Un estudiante entregó «" + t.getTitulo() + "» en «" + t.getModulo().getCurso().getTitulo() + "». Ya puedes calificarla.");
+                "Un estudiante entregó «" + t.getTitulo() + "» en «" + t.getModulo().getCurso().getTitulo() + "». Ya puedes calificarla.",
+                "/cursos/" + t.getModulo().getCurso().getId() + "/editar?pestana=evaluaciones#m-" + t.getModulo().getId());
         return aVistaEstudiante(t, e);
     }
 

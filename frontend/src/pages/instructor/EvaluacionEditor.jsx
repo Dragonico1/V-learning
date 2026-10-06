@@ -9,10 +9,11 @@ import { TIPOS_EVALUACION, TIPOS_PREGUNTA } from "./constantes.js";
 export function FormularioEvaluacion({ moduloId, evaluacion, onGuardado, onCancelar }) {
   const editando = Boolean(evaluacion?.id);
   const [titulo, setTitulo] = useState(evaluacion?.titulo ?? "");
-  const [descripcion, setDescripcion] = useState("");
+  const [descripcion, setDescripcion] = useState(evaluacion?.descripcion ?? "");
   const [tipo, setTipo] = useState(evaluacion?.tipo ?? "QUIZ");
-  const [puntaje, setPuntaje] = useState("10");
-  const [tiempo, setTiempo] = useState("");
+  const [puntaje, setPuntaje] = useState(evaluacion?.puntajeMaximo != null ? String(evaluacion.puntajeMaximo) : "10");
+  const [tiempo, setTiempo] = useState(evaluacion?.tiempoLimite ? String(evaluacion.tiempoLimite) : "");
+  const [fechaLimite, setFechaLimite] = useState(evaluacion?.fechaLimite ? evaluacion.fechaLimite.slice(0, 16) : "");
   const [alternativa, setAlternativa] = useState(true);
   const [error, setError] = useState(null);
   const [campos, setCampos] = useState({});
@@ -26,6 +27,7 @@ export function FormularioEvaluacion({ moduloId, evaluacion, onGuardado, onCance
     const datos = {
       titulo: titulo.trim(), descripcion: descripcion.trim() || null, tipo, puntajeMaximo: Number(puntaje),
       tiempoLimite: tiempo ? Number(tiempo) : null, alternativaAccesible: alternativa,
+      fechaLimite: fechaLimite || null,
     };
     try {
       const r = editando ? await api.instructor.editarEvaluacion(evaluacion.id, datos) : await api.instructor.crearEvaluacion(moduloId, datos);
@@ -41,7 +43,6 @@ export function FormularioEvaluacion({ moduloId, evaluacion, onGuardado, onCance
   const incompleto = !titulo.trim() || !(Number(puntaje) >= 0) || puntaje === "";
   return (
     <form onSubmit={enviar} className="grid gap-4" noValidate>
-      {editando && <Banner tono="info">Por ahora la lista no muestra el puntaje, el tiempo ni la descripción actuales. Vuelve a escribirlos antes de guardar.</Banner>}
       {error && <Banner tono="err">{error}</Banner>}
       <TextField label="Título" required maxLength={200} value={titulo} onChange={(e) => setTitulo(e.target.value)} error={campos.titulo} />
       <TextField multilinea label="Descripción (opcional)" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} error={campos.descripcion} />
@@ -53,6 +54,8 @@ export function FormularioEvaluacion({ moduloId, evaluacion, onGuardado, onCance
         <TextField label="Tiempo límite (minutos)" type="number" min={1} inputMode="numeric" value={tiempo} onChange={(e) => setTiempo(e.target.value)} error={campos.tiempoLimite}
           ayuda="Vacío = sin límite. Se amplía con el tiempo adicional de cada estudiante." />
       </div>
+      <TextField label="Fecha límite (opcional)" type="datetime-local" value={fechaLimite} onChange={(e) => setFechaLimite(e.target.value)} error={campos.fechaLimite}
+        ayuda="Después de esta fecha los estudiantes ya no pueden empezar la evaluación (un intento abierto sí se puede terminar). Si ya hay intentos, puedes ampliarla o quitarla." />
       <Checkbox checked={alternativa} onChange={setAlternativa}>Tiene alternativa accesible (se puede responder solo con teclado, sin arrastrar)</Checkbox>
       {!alternativa && <Banner tono="warn">Si no tiene alternativa accesible, se excluirá de la calificación de estudiantes con perfil motor y te avisaremos.</Banner>}
       <div className="flex flex-wrap gap-3">

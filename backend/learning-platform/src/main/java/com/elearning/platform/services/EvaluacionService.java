@@ -71,10 +71,13 @@ public class EvaluacionService {
                     .max(Comparator.naturalOrder()).orElse(null);
             Long enProgreso = hist.stream().filter(i -> i.getEstado() == EstadoIntento.EN_PROGRESO)
                     .map(IntentoEvaluacion::getId).findFirst().orElse(null);
+            boolean vencida = plazoVencido(e);
+            String motivo = bloqueo;
+            if (vencida && enProgreso == null) motivo = "El plazo para presentar esta evaluación terminó.";
             resultado.add(new EvaluacionEstudiante(e.getId(), e.getTitulo(), e.getDescripcion(), e.getTipo(),
                     e.getPuntajeMaximo(), minutosEfectivos(e, extra), calificable,
                     calificable ? null : "No calificada por ahora: aún no tiene una alternativa accesible.",
-                    bloqueo == null && calificable, bloqueo, hist.size(), mejor, enProgreso));
+                    motivo == null && calificable, motivo, hist.size(), mejor, enProgreso, e.getFechaLimite(), vencida));
         }
         return resultado;
     }
@@ -92,6 +95,12 @@ public class EvaluacionService {
         }
         String bloqueo = motivoModuloIncompleto(estudianteId, modulo);
         if (bloqueo != null) throw ApiException.conflicto("MODULO_INCOMPLETO", bloqueo);
+        boolean tieneAbierto = intentos.findFirstByEvaluacionIdAndEstudianteIdAndEstadoOrderByFechaInicioDesc(
+                evaluacionId, estudianteId, EstadoIntento.EN_PROGRESO).isPresent();
+        if (plazoVencido(e) && !tieneAbierto) {
+            throw ApiException.conflicto("PLAZO_VENCIDO",
+                    "El plazo para presentar esta evaluación terminó. Si lo necesitas, habla con tu instructor.");
+        }
         List<Pregunta> pregs = preguntas.findByEvaluacionIdOrderByOrden(evaluacionId);
         if (pregs.isEmpty()) throw ApiException.conflicto("EVALUACION_SIN_PREGUNTAS", "Esta evaluación aún no tiene preguntas.");
 
@@ -104,6 +113,10 @@ public class EvaluacionService {
                 return vista(previo, e, pregs, extra, true);
             }
             finalizarInterno(previo, e, estudianteId); // se agotó el tiempo: se califica lo guardado
+            if (plazoVencido(e)) {
+                throw ApiException.conflicto("PLAZO_VENCIDO",
+                        "El plazo para presentar esta evaluación terminó. Calificamos lo que alcanzaste a responder.");
+            }
         }
         IntentoEvaluacion nuevo = new IntentoEvaluacion();
         nuevo.setEvaluacion(e);
@@ -298,7 +311,12 @@ public class EvaluacionService {
     private void avisarSinAlternativa(Modulo modulo, Evaluacion e) {
         notificaciones.notificarUnaVezAlDia(modulo.getCurso().getInstructor().getId(),
                 "Actividad sin alternativa accesible: «" + e.getTitulo() + "»",
-                "La evaluación «" + e.getTitulo() + "» no tiene alternativa accesible. Para estudiantes con necesidades motoras no se calificará hasta que la agregues.");
+                "La evaluación «" + e.getTitulo() + "» no tiene alternativa accesible. Para estudiantes con necesidades motoras no se calificará hasta que la agregues.", "/cursos/" + modulo.getCurso().getId() + "/editar");
+    }
+
+    /** La fecha límite es el último momento para INICIAR; un intento ya abierto se puede terminar. */
+    static boolean plazoVencido(Evaluacion e) {
+        return e.getFechaLimite() != null && java.time.LocalDateTime.now().isAfter(e.getFechaLimite());
     }
 
     static Integer minutosEfectivos(Evaluacion e, int extraPorcentaje) {

@@ -2,6 +2,7 @@ package com.elearning.platform.controller;
 
 import com.elearning.platform.dto.AuthDtos.MensajeRespuesta;
 import com.elearning.platform.dto.ChatDtos.MensajeDto;
+import com.elearning.platform.dto.ChatDtos.MensajeReportado;
 import com.elearning.platform.dto.ChatDtos.MensajeRequest;
 import com.elearning.platform.security.UsuarioPrincipal;
 import com.elearning.platform.services.ChatService;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,13 +41,27 @@ public class ChatController {
     public MensajeRespuesta reportar(@AuthenticationPrincipal UsuarioPrincipal u, @PathVariable Long id,
                                      HttpServletRequest http) {
         chat.reportar(u, id, IpUtil.de(http));
-        return new MensajeRespuesta("Gracias. Avisamos al moderador para que revise el mensaje.");
+        return new MensajeRespuesta("Gracias. Avisamos al instructor del curso para que revise el mensaje.");
     }
 
     @PostMapping("/mensajes/{id}/ocultar")
     public MensajeRespuesta ocultar(@AuthenticationPrincipal UsuarioPrincipal u, @PathVariable Long id,
                                     HttpServletRequest http) {
         chat.ocultar(u, id, IpUtil.de(http));
-        return new MensajeRespuesta("El mensaje se ocultó.");
+        return new MensajeRespuesta("El mensaje se eliminó.");
+    }
+
+    @PostMapping("/mensajes/{id}/mantener")
+    public MensajeRespuesta mantener(@AuthenticationPrincipal UsuarioPrincipal u, @PathVariable Long id,
+                                     HttpServletRequest http) {
+        chat.mantener(u, id, IpUtil.de(http));
+        return new MensajeRespuesta("Listo: el mensaje se mantiene en la conversación.");
+    }
+
+    /** Sección «Mensajes reportados» del instructor: pendientes en todos sus cursos. */
+    @GetMapping("/moderacion/reportes")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public List<MensajeReportado> reportados(@AuthenticationPrincipal UsuarioPrincipal u) {
+        return chat.reportados(u);
     }
 }

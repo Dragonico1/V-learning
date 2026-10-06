@@ -4,6 +4,7 @@ import com.elearning.platform.enums.*;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /** DTOs de cursos, módulos, contenidos y recursos accesibles (RF-005, RF-018..022). */
@@ -43,7 +44,9 @@ public final class CursoDtos {
                                 boolean publicado, boolean afin, EstadoProgreso estado, BigDecimal porcentaje,
                                 Boolean conforme, List<String> faltantes) {}
 
-    public record EvaluacionItem(Long id, String titulo, TipoEvaluacion tipo, boolean calificable, String aviso) {}
+    public record EvaluacionItem(Long id, String titulo, TipoEvaluacion tipo, boolean calificable, String aviso,
+                                 LocalDateTime fechaLimite, BigDecimal puntajeMaximo, Integer tiempoLimite,
+                                 String descripcion) {}
 
     public record ModuloItem(Long id, String titulo, String descripcion, Integer orden, boolean sinFormatoAfin,
                              boolean completo, List<ContenidoItem> contenidos, List<EvaluacionItem> evaluaciones) {}

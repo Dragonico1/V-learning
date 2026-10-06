@@ -38,7 +38,7 @@ public class SeguridadService {
         if (usuarioId == null) return;
 
         notificaciones.notificarAdministradores("Entrada sospechosa detectada",
-                "Se rechazó una solicitud con posible " + tipo + " del usuario #" + usuarioId + " en " + ruta + ".");
+                "Se rechazó una solicitud con posible " + tipo + " del usuario #" + usuarioId + " en " + ruta + ".", "/auditoria");
 
         long intentos = registros.countByUsuarioIdAndAccionStartingWithAndFechaAfter(
                 usuarioId, ACCION_ENTRADA_MALICIOSA, LocalDateTime.now().minusMinutes(VENTANA_MINUTOS));
@@ -66,6 +66,6 @@ public class SeguridadService {
         sesiones.cerrarTodas(usuarioId);
         auditoria.registrar(usuarioId, "USUARIO_BLOQUEADO_AUTOMATICO", motivo, ResultadoAuditoria.PERMITIDO, ip);
         notificaciones.notificarAdministradores("Usuario bloqueado automáticamente",
-                "Se bloqueó temporalmente a " + u.getCorreoInstitucional() + " por " + motivo + ".");
+                "Se bloqueó temporalmente a " + u.getCorreoInstitucional() + " por " + motivo + ".", "/usuarios");
     }
 }

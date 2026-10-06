@@ -18,14 +18,14 @@ public final class DashboardDtos {
                                 long tiempoConsumidoSegundos) {}
 
     public record Calificacion(Long evaluacionId, String evaluacion, String curso, BigDecimal mejorPorcentaje,
-                               long intentos, Clasificacion clasificacion) {}
+                               long intentos, Clasificacion clasificacion, String tipo) {}
 
-    public record Pendiente(String tipo, Long id, String titulo, String curso) {}
+    public record Pendiente(String tipo, Long id, String titulo, String curso, Long cursoId, Long moduloId) {}
 
     public record Sugerencia(Long contenidoId, String titulo, FormatoContenido formato, String curso, String motivo) {}
 
     public record Totales(long tiempoTotalSegundos, long contenidosCompletados, long evaluacionesRealizadas,
-                          BigDecimal promedioCalificacion) {}
+                          BigDecimal promedioCalificacion, long tareasCalificadas) {}
 
     public record DashboardRespuesta(boolean sinActividad, String mensaje, Totales totales, List<CursoProgreso> cursos,
                                      List<Calificacion> calificaciones, List<Pendiente> pendientes,

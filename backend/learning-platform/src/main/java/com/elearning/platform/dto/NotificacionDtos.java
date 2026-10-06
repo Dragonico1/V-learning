@@ -12,7 +12,8 @@ public final class NotificacionDtos {
     private NotificacionDtos() {}
 
     public record NotificacionDto(Long id, String titulo, String mensaje, LocalDateTime fechaCreacion,
-                                  LocalDateTime fechaLectura, CanalNotificacion canal, boolean leida) {}
+                                  LocalDateTime fechaLectura, CanalNotificacion canal, boolean leida,
+                                  String enlace) {}
 
     public record ListaNotificaciones(long noLeidas, List<NotificacionDto> notificaciones) {}
 

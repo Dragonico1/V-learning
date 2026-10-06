@@ -141,6 +141,8 @@ export const api = {
     enviar: (cursoId, contenido) => d(client.post(`/cursos/${cursoId}/mensajes`, { contenido })),
     reportar: (id) => d(client.post(`/mensajes/${id}/reportar`)),
     ocultar: (id) => d(client.post(`/mensajes/${id}/ocultar`)),
+    mantener: (id) => d(client.post(`/mensajes/${id}/mantener`)),
+    reportados: () => d(client.get("/moderacion/reportes")),
   },
   notificaciones: {
     listar: (limite = 30) => d(client.get("/notificaciones", { params: { limite } })),

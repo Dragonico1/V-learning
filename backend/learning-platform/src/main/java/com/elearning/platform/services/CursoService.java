@@ -143,7 +143,7 @@ public class CursoService {
             }
             inscribir(curso, u.getId());
             notificaciones.notificar(u, "Te inscribieron en un curso",
-                    "Ya puedes entrar al curso «" + curso.getTitulo() + "».", false);
+                    "Ya puedes entrar al curso «" + curso.getTitulo() + "».", false, "/cursos/" + curso.getId());
             inscritos.add(correo);
         }
         auditoria.registrar(actorId, "INSCRIPCION_MASIVA", "cursos/" + cursoId + " (" + inscritos.size() + ")",
@@ -193,10 +193,11 @@ public class CursoService {
                 notificaciones.notificarUnaVezAlDia(curso.getInstructor().getId(),
                         "Actividad sin alternativa accesible: «" + e.getTitulo() + "»",
                         "La evaluación «" + e.getTitulo() + "» del curso «" + curso.getTitulo()
-                                + "» no tiene alternativa accesible. Para estudiantes con necesidades motoras no se calificará hasta que la agregues.");
+                                + "» no tiene alternativa accesible. Para estudiantes con necesidades motoras no se calificará hasta que la agregues.", "/cursos/" + curso.getId() + "/editar");
             }
             items.add(new EvaluacionItem(e.getId(), e.getTitulo(), e.getTipo(), calificable,
-                    calificable ? null : "No calificada por ahora: aún no tiene una alternativa accesible."));
+                    calificable ? null : "No calificada por ahora: aún no tiene una alternativa accesible.",
+                    e.getFechaLimite(), e.getPuntajeMaximo(), e.getTiempoLimite(), e.getDescripcion()));
         }
         return items;
     }
@@ -207,6 +208,6 @@ public class CursoService {
                 "Sin formato afín en «" + modulo.getTitulo() + "»",
                 "En el curso «" + curso.getTitulo() + "», el módulo «" + modulo.getTitulo()
                         + "» no tiene contenido publicado en formato " + formato
-                        + ", que prefiere parte de tu grupo. Se les muestra el texto estructurado por defecto.");
+                        + ", que prefiere parte de tu grupo. Se les muestra el texto estructurado por defecto.", "/cursos/" + curso.getId() + "/editar");
     }
 }

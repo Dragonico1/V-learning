@@ -46,3 +46,17 @@ export const CATEGORIAS = {
   MOTORA: { nombre: "Motora", detalle: "Teclado completo, botones grandes, sin arrastrar y tiempo adicional." },
   COGNITIVA: { nombre: "Cognitiva", detalle: "Lenguaje simple, pasos cortos, resúmenes y glosario." },
 };
+
+/** Texto del botón «Ir» de una notificación según la ruta de destino. */
+export function etiquetaDestino(enlace) {
+  if (!enlace) return null;
+  if (enlace.startsWith("/logros")) return "Ver mis logros";
+  if (enlace.includes("vista=reportes")) return "Revisar reportes";
+  if (enlace.startsWith("/comunidad")) return "Ir a la comunidad";
+  if (enlace.includes("/editar")) return enlace.includes("#m-") ? "Ir al módulo" : "Ir al curso";
+  if (/^\/cursos\/\d+/.test(enlace)) return enlace.includes("#m-") ? "Ir al módulo" : "Ir al curso";
+  if (enlace.startsWith("/cursos")) return "Ir a mis cursos";
+  if (enlace.startsWith("/auditoria")) return "Ver auditoría";
+  if (enlace.startsWith("/usuarios")) return "Ir a usuarios";
+  return "Ir";
+}

@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Check, Clock } from "lucide-react";
+import { ArrowRight, Bell, Check, Clock } from "lucide-react";
 import { useNotif } from "../../context/NotifContext.jsx";
-import { fmtFecha } from "../../utils/format.js";
+import { etiquetaDestino, fmtFecha } from "../../utils/format.js";
 import { mensajeError } from "../../api/client.js";
 
 const OPCIONES = [["1_DIA", "1 día"], ["3_DIAS", "3 días"], ["1_SEMANA", "1 semana"]];
@@ -57,6 +57,13 @@ export function NotificationBell() {
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 pl-4">
+                    {n.enlace && (
+                      <Link to={n.enlace}
+                        onClick={() => { setAbierta(false); if (!n.leida) accion(() => marcarLeida(n.id)); }}
+                        className="flex min-h-9 items-center gap-1 rounded-lg bg-primary-600 px-3 text-sm font-bold text-white hover:bg-primary-700">
+                        {etiquetaDestino(n.enlace)}<ArrowRight size={15} aria-hidden="true" /><span className="sr-only">: {n.titulo}</span>
+                      </Link>
+                    )}
                     {!n.leida && (
                       <button type="button" onClick={() => accion(() => marcarLeida(n.id))}
                         className="flex min-h-9 items-center gap-1 rounded-lg border border-line px-2.5 text-sm font-bold text-strong hover:bg-subtle">

@@ -59,7 +59,7 @@ public class ContenidoService {
                 notificaciones.notificarUnaVezAlDia(curso.getInstructor().getId(),
                         "Falta texto alternativo en «" + c.getTitulo() + "»",
                         "El contenido «" + c.getTitulo() + "» tiene " + sinAlt
-                                + " imagen(es) sin texto alternativo. Agrega la descripción para lectores de pantalla.");
+                                + " imagen(es) sin texto alternativo. Agrega la descripción para lectores de pantalla.", "/cursos/" + curso.getId() + "/editar");
             }
         }
 
@@ -98,7 +98,7 @@ public class ContenidoService {
             notificaciones.notificarUnaVezAlDia(c.getModulo().getCurso().getInstructor().getId(),
                     "Resumen automático no aceptable: «" + c.getTitulo() + "»",
                     "El resumen automático de «" + c.getTitulo() + "» no alcanzó la calidad mínima (texto muy corto o poco reducible). "
-                            + "Se conservó el original. Considera cargar una versión simplificada.");
+                            + "Se conservó el original. Considera cargar una versión simplificada.", "/cursos/" + c.getModulo().getCurso().getId() + "/editar");
         }
         Optional<String> simplificada = recursos.findByContenidoIdOrderByIdAsc(contenidoId).stream()
                 .filter(r -> r.isDisponible() && r.getTipo() == TipoRecursoAccesible.VERSION_SIMPLIFICADA)

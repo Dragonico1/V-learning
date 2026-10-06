@@ -158,7 +158,7 @@ public class UsuarioService {
             notificaciones.notificar(adminId, "Entrega manual de credenciales",
                     "No pudimos enviar las credenciales de " + u.getCorreoInstitucional()
                             + ". Entrégalas de forma segura (en persona o por un canal cifrado) o usa «Reenviar credenciales».",
-                    true);
+                    true, "/usuarios");
         }
         String mensaje = prefijo + (enviado ? " Enviamos las credenciales al correo."
                 : " No se pudo enviar el correo: entrega la contraseña temporal de forma segura.");

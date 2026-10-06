@@ -39,6 +39,10 @@ public class Evaluacion {
     @Column(name = "tiempo_limite")
     private Integer tiempoLimite;
 
+    /** Fecha límite para iniciar la evaluación (null = sin límite). */
+    @Column(name = "fecha_limite")
+    private LocalDateTime fechaLimite;
+
     @Column(name = "alternativa_accesible", nullable = false)
     private boolean alternativaAccesible = true;
 }

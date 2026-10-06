@@ -86,6 +86,6 @@ public class NotificacionGestionService {
 
     private static NotificacionDto aDto(Notificacion n) {
         return new NotificacionDto(n.getId(), n.getTitulo(), n.getMensaje(), n.getFechaCreacion(), n.getFechaLectura(),
-                n.getCanal(), n.isLeida());
+                n.getCanal(), n.isLeida(), n.getEnlace());
     }
 }

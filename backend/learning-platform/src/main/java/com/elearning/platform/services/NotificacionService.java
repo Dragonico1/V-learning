@@ -37,6 +37,12 @@ public class NotificacionService {
 
     @Transactional
     public Optional<Notificacion> notificar(Usuario usuario, String titulo, String mensaje, boolean obligatoria) {
+        return notificar(usuario, titulo, mensaje, obligatoria, null);
+    }
+
+    /** {@code enlace}: ruta de la aplicación a la que lleva el botón «Ir» de la notificación (o null). */
+    @Transactional
+    public Optional<Notificacion> notificar(Usuario usuario, String titulo, String mensaje, boolean obligatoria, String enlace) {
         if (!usuario.isNotificacionesHabilitadas() && !obligatoria) {
             return Optional.empty();
         }
@@ -52,6 +58,7 @@ public class NotificacionService {
         n.setTitulo(titulo);
         n.setMensaje(mensaje);
         n.setCanal(canal);
+        n.setEnlace(enlace);
         return Optional.of(notificaciones.save(n));
     }
 
@@ -70,7 +77,12 @@ public class NotificacionService {
 
     @Transactional
     public Optional<Notificacion> notificar(Long usuarioId, String titulo, String mensaje, boolean obligatoria) {
-        return usuarios.findById(usuarioId).flatMap(u -> notificar(u, titulo, mensaje, obligatoria));
+        return notificar(usuarioId, titulo, mensaje, obligatoria, null);
+    }
+
+    @Transactional
+    public Optional<Notificacion> notificar(Long usuarioId, String titulo, String mensaje, boolean obligatoria, String enlace) {
+        return usuarios.findById(usuarioId).flatMap(u -> notificar(u, titulo, mensaje, obligatoria, enlace));
     }
 
     /**
@@ -79,15 +91,25 @@ public class NotificacionService {
      */
     @Transactional
     public void notificarUnaVezAlDia(Long usuarioId, String titulo, String mensaje) {
+        notificarUnaVezAlDia(usuarioId, titulo, mensaje, null);
+    }
+
+    @Transactional
+    public void notificarUnaVezAlDia(Long usuarioId, String titulo, String mensaje, String enlace) {
         if (notificaciones.contarPorTituloDesde(usuarioId, titulo, LocalDate.now().atStartOfDay()) > 0) return;
-        notificar(usuarioId, titulo, mensaje, true);
+        notificar(usuarioId, titulo, mensaje, true, enlace);
     }
 
     /** Alerta a todos los administradores activos (siempre obligatoria). */
     @Transactional
     public void notificarAdministradores(String titulo, String mensaje) {
+        notificarAdministradores(titulo, mensaje, null);
+    }
+
+    @Transactional
+    public void notificarAdministradores(String titulo, String mensaje, String enlace) {
         for (Usuario admin : usuarios.findByRolAndEstado(RolUsuario.ADMINISTRADOR, EstadoUsuario.ACTIVO)) {
-            notificar(admin, titulo, mensaje, true);
+            notificar(admin, titulo, mensaje, true, enlace);
         }
     }
 
@@ -98,10 +120,15 @@ public class NotificacionService {
      */
     @Transactional
     public int notificarInscritos(Long cursoId, String titulo, String mensaje) {
+        return notificarInscritos(cursoId, titulo, mensaje, null);
+    }
+
+    @Transactional
+    public int notificarInscritos(Long cursoId, String titulo, String mensaje, String enlace) {
         int enviados = 0;
         for (Inscripcion i : inscripciones.findByCursoIdAndEstadoIn(cursoId, List.of(EstadoInscripcion.ACTIVA))) {
             try {
-                if (notificar(i.getEstudiante(), recortar(titulo, 190), mensaje, false).isPresent()) enviados++;
+                if (notificar(i.getEstudiante(), recortar(titulo, 190), mensaje, false, enlace).isPresent()) enviados++;
             } catch (RuntimeException e) {
                 log.warn("No se pudo notificar al estudiante de la inscripción {}: {}", i.getId(), e.getMessage());
             }

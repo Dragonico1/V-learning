@@ -2,8 +2,10 @@ package com.elearning.platform.services;
 
 import com.elearning.platform.config.VlearningProperties;
 import com.elearning.platform.dto.ChatDtos.MensajeDto;
+import com.elearning.platform.dto.ChatDtos.MensajeReportado;
 import com.elearning.platform.entity.Curso;
 import com.elearning.platform.entity.Mensaje;
+import com.elearning.platform.entity.ReporteMensaje;
 import com.elearning.platform.entity.Usuario;
 import com.elearning.platform.enums.*;
 import com.elearning.platform.events.MensajeChatEvent;
@@ -11,15 +13,18 @@ import com.elearning.platform.exception.ApiException;
 import com.elearning.platform.repository.CursoRepository;
 import com.elearning.platform.repository.InscripcionRepository;
 import com.elearning.platform.repository.MensajeRepository;
+import com.elearning.platform.repository.ReporteMensajeRepository;
 import com.elearning.platform.repository.UsuarioRepository;
 import com.elearning.platform.security.UsuarioPrincipal;
 import com.elearning.platform.util.CorreccionEvaluacion;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +33,7 @@ import java.util.List;
  * RF-010 Comunidad del curso: solo miembros (estudiantes inscritos, su instructor, administradores).
  * Valida el contenido, guarda el historial, difunde en tiempo real y permite reportar.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -35,6 +41,7 @@ public class ChatService {
     private static final List<EstadoMensaje> VISIBLES = List.of(EstadoMensaje.ENVIADO, EstadoMensaje.REPORTADO);
 
     private final MensajeRepository mensajes;
+    private final ReporteMensajeRepository reportes;
     private final CursoRepository cursos;
     private final InscripcionRepository inscripciones;
     private final UsuarioRepository usuarios;
@@ -85,7 +92,10 @@ public class ChatService {
         return dto;
     }
 
-    /** Marca como REPORTADO y avisa al instructor del curso y a los administradores. */
+    /**
+     * Reportar NO borra el mensaje: queda marcado «en revisión» y solo se avisa al instructor del curso,
+     * que es quien decide (no se involucra a los administradores: con muchos cursos sería inviable).
+     */
     @Transactional
     public void reportar(UsuarioPrincipal u, Long mensajeId, String ip) {
         Mensaje m = mensajes.findById(mensajeId).orElseThrow(() -> ApiException.noEncontrado("No encontramos ese mensaje."));
@@ -94,25 +104,92 @@ public class ChatService {
         if (m.getUsuario().getId().equals(u.id())) {
             throw ApiException.solicitudInvalida("REPORTE_PROPIO", "No puedes reportar tu propio mensaje.");
         }
-        if (m.getEstado() == EstadoMensaje.ENVIADO) {
+        if (m.getEstado() == EstadoMensaje.OCULTO) {
+            throw ApiException.conflicto("MENSAJE_ELIMINADO", "Ese mensaje ya fue eliminado.");
+        }
+        if (reportes.existsByMensajeIdAndReportanteId(mensajeId, u.id())) {
+            return; // ya lo habías reportado: no se duplica ni se vuelve a avisar
+        }
+        ReporteMensaje r = new ReporteMensaje();
+        r.setMensaje(m);
+        r.setReportante(usuarios.getReferenceById(u.id()));
+        reportes.save(r);
+        boolean primero = m.getEstado() == EstadoMensaje.ENVIADO;
+        if (primero) {
             m.setEstado(EstadoMensaje.REPORTADO);
+            m.setFechaReporte(LocalDateTime.now());
             mensajes.save(m);
         }
-        String aviso = "Se reportó un mensaje en «" + curso.getTitulo() + "»: «" + recortar(m.getContenido(), 120) + "».";
-        notificaciones.notificar(curso.getInstructor().getId(), "Mensaje reportado", aviso, true);
-        notificaciones.notificarAdministradores("Mensaje reportado", aviso);
+        Long instructorId = curso.getInstructor().getId();
+        if (primero && !instructorId.equals(u.id())) {
+            notificaciones.notificar(instructorId, "Mensaje reportado en «" + NotificacionService.recortar(curso.getTitulo(), 120) + "»",
+                    "Se reportó un mensaje de " + m.getUsuario().getNombre() + ": «" + recortar(m.getContenido(), 120)
+                            + "». Revísalo y decide si se elimina o se mantiene.", true,
+                    "/comunidad/" + curso.getId() + "?vista=reportes");
+        }
         auditoria.registrar(u.id(), "MENSAJE_REPORTADO", "mensajes/" + mensajeId, ResultadoAuditoria.PERMITIDO, ip);
     }
 
-    /** Moderación: el instructor del curso o un administrador oculta un mensaje reportado. */
+    /** Mensajes reportados pendientes en los cursos del instructor (sección «Mensajes reportados»). */
+    @Transactional(readOnly = true)
+    public List<MensajeReportado> reportados(UsuarioPrincipal u) {
+        if (u.rol() != RolUsuario.INSTRUCTOR) throw ApiException.prohibido("ACCESO_DENEGADO", "Solo el instructor revisa los reportes de sus cursos.");
+        return mensajes.reportadosDelInstructor(u.id(), EstadoMensaje.REPORTADO).stream().map(m -> new MensajeReportado(
+                m.getId(), m.getCurso().getId(), m.getCurso().getTitulo(), m.getUsuario().getId(), m.getUsuario().getNombre(),
+                m.getUsuario().getRol(), m.getContenido(), m.getFechaEnvio(), m.getFechaReporte(),
+                reportes.delMensaje(m.getId()).stream().map(r -> r.getReportante().getNombre()).toList())).toList();
+    }
+
+    /** Decisión del instructor: eliminar el mensaje de la conversación. */
     @Transactional
     public void ocultar(UsuarioPrincipal u, Long mensajeId, String ip) {
+        Mensaje m = moderable(u, mensajeId);
+        m.setEstado(EstadoMensaje.OCULTO);
+        resolver(m, u, ResolucionMensaje.ELIMINADO);
+        auditoria.registrar(u.id(), "MENSAJE_ELIMINADO", "mensajes/" + mensajeId, ResultadoAuditoria.PERMITIDO, ip);
+        avisarReportantes(m, "se eliminó de la conversación");
+    }
+
+    /** Decisión del instructor: el reporte no procede y el mensaje se queda. */
+    @Transactional
+    public void mantener(UsuarioPrincipal u, Long mensajeId, String ip) {
+        Mensaje m = moderable(u, mensajeId);
+        if (m.getEstado() != EstadoMensaje.REPORTADO) {
+            throw ApiException.conflicto("MENSAJE_NO_REPORTADO", "Ese mensaje no tiene un reporte pendiente.");
+        }
+        m.setEstado(EstadoMensaje.ENVIADO);
+        resolver(m, u, ResolucionMensaje.MANTENIDO);
+        auditoria.registrar(u.id(), "REPORTE_DESCARTADO", "mensajes/" + mensajeId, ResultadoAuditoria.PERMITIDO, ip);
+        avisarReportantes(m, "se mantiene en la conversación");
+        reportes.deleteAll(reportes.delMensaje(mensajeId)); // si vuelve a ser inapropiado, se puede reportar de nuevo
+    }
+
+    private Mensaje moderable(UsuarioPrincipal u, Long mensajeId) {
         Mensaje m = mensajes.findById(mensajeId).orElseThrow(() -> ApiException.noEncontrado("No encontramos ese mensaje."));
         if (u.rol() == RolUsuario.ESTUDIANTE) throw ApiException.prohibido("ACCESO_DENEGADO", "No tienes permiso para moderar.");
         exigirMiembro(m.getCurso().getId(), u.id(), u.rol());
-        m.setEstado(EstadoMensaje.OCULTO);
+        return m;
+    }
+
+    private void resolver(Mensaje m, UsuarioPrincipal u, ResolucionMensaje r) {
+        m.setResolucion(r);
+        m.setModerador(usuarios.getReferenceById(u.id()));
+        m.setFechaModeracion(LocalDateTime.now());
         mensajes.save(m);
-        auditoria.registrar(u.id(), "MENSAJE_OCULTADO", "mensajes/" + mensajeId, ResultadoAuditoria.PERMITIDO, ip);
+    }
+
+    private void avisarReportantes(Mensaje m, String decision) {
+        String curso = m.getCurso().getTitulo();
+        for (ReporteMensaje r : reportes.delMensaje(m.getId())) {
+            if (r.getReportante().getId().equals(m.getModerador().getId())) continue;
+            try {
+                notificaciones.notificar(r.getReportante(), "Revisamos tu reporte",
+                        "El mensaje que reportaste en «" + recortar(curso, 120) + "» " + decision + ".", false,
+                        "/comunidad/" + m.getCurso().getId());
+            } catch (RuntimeException e) {
+                log.warn("No se pudo avisar al reportante {}: {}", r.getReportante().getId(), e.getMessage());
+            }
+        }
     }
 
     // ------------------------------------------------------------------

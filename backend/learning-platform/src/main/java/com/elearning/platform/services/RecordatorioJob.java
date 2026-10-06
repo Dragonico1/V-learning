@@ -62,7 +62,7 @@ public class RecordatorioJob {
         if (!pendientes.isEmpty() && notificaciones.contarPorTituloDesde(u.getId(), TITULO_PENDIENTES, hoy) == 0) {
             String cursos = String.join(", ", pendientes.stream().limit(3).map(i -> "«" + i.getCurso().getTitulo() + "»").toList());
             notificador.notificar(u, TITULO_PENDIENTES,
-                    "Tienes " + pendientes.size() + " curso(s) por completar: " + cursos + ".", false);
+                    "Tienes " + pendientes.size() + " curso(s) por completar: " + cursos + ".", false, "/cursos");
             n++;
         }
         LocalDateTime limite = LocalDateTime.now().minusDays(props.notificaciones().diasInactividad());
@@ -70,7 +70,7 @@ public class RecordatorioJob {
         if (inactivo && !pendientes.isEmpty()
                 && notificaciones.contarPorTituloDesde(u.getId(), TITULO_INACTIVIDAD, hoy) == 0) {
             notificador.notificar(u, TITULO_INACTIVIDAD,
-                    "Hace más de " + props.notificaciones().diasInactividad() + " días que no entras. Retoma donde lo dejaste.", false);
+                    "Hace más de " + props.notificaciones().diasInactividad() + " días que no entras. Retoma donde lo dejaste.", false, "/cursos");
             n++;
         }
         return n;

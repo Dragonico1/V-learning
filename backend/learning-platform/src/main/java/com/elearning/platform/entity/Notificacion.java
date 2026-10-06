@@ -45,6 +45,10 @@ public class Notificacion {
     @Column(name = "pospuesta_hasta")
     private LocalDateTime pospuestaHasta;
 
+    /** Ruta de la aplicación a la que lleva el botón «Ir» (p. ej. /logros). Puede ser null. */
+    @Column(length = 300)
+    private String enlace;
+
     @PrePersist
     void antesDeGuardar() {
         if (fechaCreacion == null) fechaCreacion = LocalDateTime.now();

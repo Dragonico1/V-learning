@@ -21,7 +21,8 @@ public final class EvaluacionDtos {
             @NotNull(message = "Elige el tipo.") TipoEvaluacion tipo,
             @NotNull(message = "Indica el puntaje máximo.") @DecimalMin(value = "0.01", message = "Debe ser mayor que 0.") BigDecimal puntajeMaximo,
             @Min(value = 1, message = "Mínimo 1 minuto.") Integer tiempoLimite,
-            Boolean alternativaAccesible) {}
+            Boolean alternativaAccesible,
+            LocalDateTime fechaLimite) {}
 
     public record OpcionRequest(
             @NotBlank(message = "Escribe el texto de la opción.") String texto,
@@ -35,7 +36,8 @@ public final class EvaluacionDtos {
             @NotEmpty(message = "Agrega las opciones.") @Size(max = 10, message = "Máximo 10 opciones.") List<@Valid OpcionRequest> opciones) {}
 
     public record EvaluacionCreada(Long id, String titulo, TipoEvaluacion tipo, BigDecimal puntajeMaximo,
-                                   Integer tiempoLimite, boolean alternativaAccesible, int preguntas) {}
+                                   Integer tiempoLimite, boolean alternativaAccesible, int preguntas,
+                                   LocalDateTime fechaLimite) {}
 
     public record PreguntaCreada(Long id, int orden, TipoPregunta tipo, BigDecimal puntaje) {}
 
@@ -43,7 +45,8 @@ public final class EvaluacionDtos {
     public record EvaluacionEstudiante(Long id, String titulo, String descripcion, TipoEvaluacion tipo,
                                        BigDecimal puntajeMaximo, Integer tiempoLimiteMinutos, boolean calificable,
                                        String aviso, boolean habilitada, String motivoNoHabilitada, long intentos,
-                                       BigDecimal mejorPorcentaje, Long intentoEnProgresoId) {}
+                                       BigDecimal mejorPorcentaje, Long intentoEnProgresoId, LocalDateTime fechaLimite,
+                                       boolean vencida) {}
 
     public record OpcionVista(Long id, String texto) {}
 

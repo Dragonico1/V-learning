@@ -56,8 +56,8 @@ export default function EstudianteInicio() {
               <ul className="grid gap-2">
                 {d.pendientes.map((p) => (
                   <li key={`${p.tipo}-${p.id}`}>
-                    <Link className="font-bold text-primary-600 underline" to={p.tipo === "EVALUACION" ? "/evaluaciones" : `/contenidos/${p.id}`}>{p.titulo}</Link>
-                    <span className="block text-sm">{p.tipo === "EVALUACION" ? "Evaluación" : "Contenido"} · {p.curso}</span>
+                    <Link className="font-bold text-primary-600 underline" to={p.tipo === "EVALUACION" ? "/evaluaciones" : p.tipo === "TAREA" ? `/cursos/${p.cursoId}#m-${p.moduloId}` : `/contenidos/${p.id}`}>{p.titulo}</Link>
+                    <span className="block text-sm">{p.tipo === "EVALUACION" ? "Evaluación" : p.tipo === "TAREA" ? "Tarea" : "Contenido"} · {p.curso}</span>
                   </li>
                 ))}
               </ul>
@@ -67,7 +67,7 @@ export default function EstudianteInicio() {
             <h2 id="res" className="mb-2 text-xl">Tu resumen</h2>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div><dt>Contenidos completados</dt><dd className="text-2xl font-extrabold text-strong">{fmtNumero(d.totales.contenidosCompletados)}</dd></div>
-              <div><dt>Evaluaciones</dt><dd className="text-2xl font-extrabold text-strong">{fmtNumero(d.totales.evaluacionesRealizadas)}</dd></div>
+              <div><dt>Evaluaciones y tareas</dt><dd className="text-2xl font-extrabold text-strong">{fmtNumero((d.totales.evaluacionesRealizadas ?? 0) + (d.totales.tareasCalificadas ?? 0))}</dd></div>
             </dl>
             <p className="mt-3"><Link className="font-bold text-primary-600 underline" to="/progreso">Ver mi progreso completo</Link></p>
           </Card>
