@@ -1,13 +1,22 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Circle, PlayCircle } from "lucide-react";
 import { api } from "../../api/client.js";
 import { useAsync } from "../../utils/useAsync.js";
 import { ESTADO_PROGRESO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO, VARK } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, ProgressBar } from "../../components/ui/index.jsx";
+import TareasDelModulo from "./TareasDelModulo.jsx";
 
 export default function CursoDetalle() {
   const { id } = useParams();
   const { datos: c, cargando, error, recargar } = useAsync(() => api.cursos.detalle(id), [id]);
+  const { hash } = useLocation();
+  // Llegar desde «Ir al módulo»: desplaza y enfoca el módulo indicado en la dirección (#m-ID).
+  useEffect(() => {
+    if (!c || !hash) return;
+    const el = document.getElementById(hash.slice(1));
+    if (el) { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); }
+  }, [c, hash]);
   if (cargando && !c) return <Cargando texto="Cargando el curso…" />;
   if (error && !c) return <EstadoError mensaje={error} onReintentar={recargar} />;
 
@@ -22,7 +31,7 @@ export default function CursoDetalle() {
       <div className="grid gap-5">
         {c.modulos.map((m) => (
           <Card as="section" key={m.id} aria-labelledby={`m-${m.id}`}>
-            <h2 id={`m-${m.id}`} className="text-xl">Módulo {m.orden}: {m.titulo} {m.completo && <Badge tono="ok">Completo</Badge>}</h2>
+            <h2 id={`m-${m.id}`} tabIndex={-1} className="scroll-mt-4 text-xl outline-none">Módulo {m.orden}: {m.titulo} {m.completo && <Badge tono="ok">Completo</Badge>}</h2>
             {m.descripcion && <p className="mb-2">{m.descripcion}</p>}
             {m.sinFormatoAfin && <Banner tono="info" className="my-3">Este módulo no tiene contenidos en tu método preferido; te mostramos los formatos disponibles.</Banner>}
             <ul className="grid gap-2">
@@ -50,6 +59,7 @@ export default function CursoDetalle() {
                 </li>
               ))}
             </ul>
+            <TareasDelModulo moduloId={m.id} />
           </Card>
         ))}
       </div>

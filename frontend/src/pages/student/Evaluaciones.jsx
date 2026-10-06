@@ -5,6 +5,8 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { TIPO_EVAL_TEXTO, fmtPct } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, Vacio } from "../../components/ui/index.jsx";
+import TareaEstudianteCard from "../../components/TareaEstudianteCard.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 async function cargarTodas() {
   const mios = (await api.cursos.mios());
@@ -12,9 +14,12 @@ async function cargarTodas() {
   for (const cur of mios) {
     const det = await api.cursos.detalle(cur.id);
     for (const m of det.modulos) {
-      if (!m.evaluaciones.length) continue;
-      const evs = await api.evaluaciones.delModulo(m.id);
-      salida.push({ curso: det.titulo, modulo: m.titulo, evaluaciones: evs });
+      const [evs, tareas] = await Promise.all([
+        m.evaluaciones.length ? api.evaluaciones.delModulo(m.id) : Promise.resolve([]),
+        api.tareas.delModulo(m.id),
+      ]);
+      if (!evs.length && !tareas.length) continue;
+      salida.push({ cursoId: det.id, curso: det.titulo, moduloId: m.id, modulo: m.titulo, evaluaciones: evs, tareas });
     }
   }
   return salida;
@@ -42,8 +47,9 @@ export default function Evaluaciones() {
 
   return (
     <>
-      <PageHeader titulo="Evaluaciones" subtitulo="Presenta las evaluaciones de tus cursos. Tus respuestas se guardan solas." />
-      {datos.length === 0 ? <Vacio titulo="Aún no hay evaluaciones disponibles">Aparecerán aquí cuando tus cursos las incluyan.</Vacio> : datos.map((g, i) => (
+      <VolverACursos />
+      <PageHeader titulo="Evaluaciones y tareas" subtitulo="Presenta las evaluaciones y entrega las tareas de tus cursos. Tus respuestas se guardan solas." />
+      {datos.length === 0 ? <Vacio titulo="Aún no hay evaluaciones ni tareas">Aparecerán aquí cuando tus cursos las incluyan.</Vacio> : datos.map((g, i) => (
         <section key={i} className="mb-6" aria-labelledby={`g-${i}`}>
           <h2 id={`g-${i}`} className="mb-2 text-xl">{g.curso} · {g.modulo}</h2>
           <ul className="grid gap-3">
@@ -60,12 +66,19 @@ export default function Evaluaciones() {
                       {e.mejorPorcentaje != null && <span>Mejor resultado: {fmtPct(e.mejorPorcentaje)}</span>}
                     </p>
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                  <Button variante="secondary" to={`/cursos/${g.cursoId}#m-${g.moduloId}`}>Ir al módulo<span className="sr-only"> de {e.titulo}</span></Button>
                   <Button cargando={iniciando === e.id} disabled={!e.habilitada || !e.calificable} motivo={!e.habilitada ? e.motivoNoHabilitada : !e.calificable ? e.aviso : undefined}
                     onClick={() => iniciar(e)}>{e.intentoEnProgresoId ? "Reanudar" : e.intentos > 0 ? "Intentar de nuevo" : "Comenzar"}<span className="sr-only"> {e.titulo}</span></Button>
+                  </div>
                 </div>
                 {!e.habilitada && e.motivoNoHabilitada && <Banner tono="info" className="mt-3">{e.motivoNoHabilitada}</Banner>}
                 {!e.calificable && e.aviso && <Banner tono="warn" className="mt-3">{e.aviso}</Banner>}
               </Card>
+            ))}
+            {g.tareas.map((t) => (
+              <TareaEstudianteCard key={`t${t.id}`} tarea={t} onCambio={recargar}
+                acciones={<Button variante="secondary" to={`/cursos/${g.cursoId}#m-${g.moduloId}`}>Ir al módulo<span className="sr-only"> de {t.titulo}</span></Button>} />
             ))}
           </ul>
         </section>

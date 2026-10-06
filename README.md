@@ -147,6 +147,7 @@ v-learning-platform/
 1. Abre SSMS y conéctate a tu instancia.
 2. Abre `database/01_schema.sql` y ejecútalo completo. **Borra y recrea** la base `vlearning`.
 3. Crea el usuario de la aplicación y bloquea la modificación de la auditoría (bloque comentado al final del script).
+4. **Si tu base ya existía** (creada antes de agregar las tareas calificables), no la recrees: ejecuta solo `database/02_tareas.sql`, que crea las tablas `tareas` y `entregas_tarea` sin borrar datos.
 
 ### 6.2 Backend
 
@@ -428,6 +429,8 @@ Base: `/api`. Todos requieren JWT salvo los marcados como públicos. El rol se l
 | POST | `/contenidos/{id}/recursos` | Recursos accesibles |
 | POST | `/contenidos/{id}/publicar` · `/instructor/cursos/{id}/publicar` | Publicación (bloquea no conformes) |
 | POST | `/modulos/{id}/evaluaciones` · `/evaluaciones/{id}/preguntas` | Evaluaciones y preguntas |
+| GET/POST/PUT/DELETE | `/instructor/modulos/{id}/tareas` · `/modulos/{id}/tareas` · `/tareas/{id}` | Tareas calificables del módulo |
+| GET/PUT | `/tareas/{id}/entregas` · `/entregas/{id}/calificacion` | Ver entregas y calificar (notifica al estudiante) |
 | POST | `/instructor/cursos/{id}/inscripciones` | Inscribe estudiantes |
 | POST/GET | `/informes` | Informes de **sus** cursos |
 
@@ -483,6 +486,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Filtro de entradas maliciosas:** el cuerpo de un contenido que incluya `<script` o patrones de inyección SQL se rechaza (RF-013). Si un instructor necesita mostrar código, debe escribirlo sin esas secuencias.
 - **Ranking:** se recalcula por curso a partir de la actividad (periodo `ACUMULADO`) al ocurrir un evento y si tiene más de 10 minutos.
 - **Restablecer accesibilidad:** vuelve a los valores por defecto de las categorías que la persona tiene activas, no a cero.
+- **Tareas calificables y avisos:** el instructor crea tareas por módulo (puntaje máximo y fecha límite opcional); el estudiante entrega texto y/o un enlace (`GET /modulos/{id}/tareas`, `PUT /tareas/{id}/entrega`) y puede reenviar hasta que se califique. Se notifica a los inscritos activos cuando se crea una tarea y cuando un contenido **se publica** (un contenido en borrador no es visible para los estudiantes, por eso el aviso sale al publicarlo, no al crearlo). Las notificaciones del servidor reproducen un tono corto en el navegador, que cada persona puede apagar en Configuración; el aviso visual nunca se omite. Las notas de las tareas todavía no se incluyen en el promedio del dashboard de progreso.
 - **Tipo de respuesta del Tutor IA:** `EXPLICACION`/`EJEMPLO`/`ACTIVIDAD`/`RESUMEN` se infiere de palabras clave de la pregunta; el Tutor no usa el estilo VARK ni el historial de las últimas interacciones.
 - **Limitaciones conocidas:** el instructor no puede leer las preguntas ya creadas de una evaluación (no hay GET), por lo que el formulario de edición no precarga puntaje, tiempo ni descripción; las preferencias de accesibilidad de instructor y administrador se guardan solo en el navegador; el administrador filtra informes por ID de estudiante.
 - **Endpoints adicionales a los de la sección 10:** `GET /admin/cursos`, `GET/PUT /vark/metodos`, `POST /accesibilidad/previsualizar`, `GET /accesibilidad/temas`, `POST /instructor/cursos/{id}/archivar`, `GET /contenidos/{id}/conformidad`, `POST /contenidos/{id}/despublicar`, `GET /contenidos/{id}/recursos`, `DELETE /recursos/{id}`, `PUT /modulos/{id}`, `PUT/DELETE /evaluaciones/{id}`, `POST /mensajes/{id}/ocultar` (moderación), `POST /informes/vista` (vista previa del informe, mensaje «sin datos») y `GET /notificaciones/preferencias`.

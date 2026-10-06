@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { CheckCircle2, CircleAlert, Info, X } from "lucide-react";
 import { api } from "../api/client.js";
 import { useAuth } from "./AuthContext.jsx";
+import { reproducirAviso, sonidoActivado } from "../utils/sonido.js";
 
 const NotifContext = createContext(null);
 const ICONOS = { ok: CheckCircle2, error: CircleAlert, info: Info };
@@ -12,8 +13,9 @@ const ESTILOS = {
 };
 
 /**
- * Notificaciones (RF-011) y alertas visuales (RF-020): la app no reproduce sonidos; cada aviso es un banner
- * emergente visible más un anuncio en una región aria-live.
+ * Notificaciones (RF-011) y alertas visuales (RF-020): cada aviso es un banner emergente visible más un
+ * anuncio en una región aria-live. Al llegar una notificación del servidor suena un tono corto, que cada
+ * persona puede apagar en Configuración (nunca es la única señal).
  */
 export function NotifProvider({ children }) {
   const { usuario } = useAuth();
@@ -40,10 +42,12 @@ export function NotifProvider({ children }) {
       if (vistas.current === null) {
         vistas.current = new Set(r.notificaciones.map((n) => n.id));
       } else {
-        r.notificaciones.filter((n) => !n.leida && !vistas.current.has(n.id)).forEach((n) => {
+        const nuevas = r.notificaciones.filter((n) => !n.leida && !vistas.current.has(n.id));
+        nuevas.forEach((n) => {
           vistas.current.add(n.id);
           avisar(`${n.titulo}: ${n.mensaje}`, "info");
         });
+        if (nuevas.length > 0 && sonidoActivado()) reproducirAviso();
       }
     } catch { /* el sondeo reintenta en 30 s */ }
   }, [usuario, avisar]);

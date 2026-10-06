@@ -5,6 +5,7 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { CLASIFICACION_TEXTO, fmtDuracion, fmtNumero, fmtPct } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, ProgressBar } from "../../components/ui/index.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 const TONO = { EXCELENTE: "ok", ACEPTABLE: "warn", INSUFICIENTE: "err" };
 
@@ -24,6 +25,7 @@ export default function MiProgreso() {
 
   return (
     <>
+      <VolverACursos />
       <PageHeader titulo="Mi progreso" subtitulo="Tu avance, tus calificaciones y el tiempo que dedicas."
         acciones={<>
           <Button variante="secondary" icono={Download} cargando={bajando === "PDF"} onClick={() => bajar("PDF")}>Exportar PDF</Button>

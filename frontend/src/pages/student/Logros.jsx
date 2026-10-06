@@ -5,6 +5,7 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { fmtDia } from "../../utils/format.js";
 import { Banner, Card, Cargando, EstadoError, PageHeader, ProgressBar, SelectField, Toggle, Vacio } from "../../components/ui/index.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 function Ranking({ cursos }) {
   const [cursoId, setCursoId] = useState("");
@@ -51,6 +52,7 @@ export default function Logros() {
 
   return (
     <>
+      <VolverACursos />
       <PageHeader titulo="Logros" subtitulo="Gana puntos al avanzar y desbloquea insignias." />
       <Card className="mb-6 max-w-2xl">
         <p className="text-sm">Nivel</p>

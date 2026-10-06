@@ -1,17 +1,22 @@
 package com.elearning.platform.services;
 
+import com.elearning.platform.entity.Inscripcion;
 import com.elearning.platform.entity.Notificacion;
 import com.elearning.platform.entity.Usuario;
 import com.elearning.platform.enums.CanalNotificacion;
+import com.elearning.platform.enums.EstadoInscripcion;
 import com.elearning.platform.enums.EstadoUsuario;
 import com.elearning.platform.enums.RolUsuario;
+import com.elearning.platform.repository.InscripcionRepository;
 import com.elearning.platform.repository.NotificacionRepository;
 import com.elearning.platform.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,6 +25,7 @@ import java.util.Optional;
  * notificaciones no se envía nada, salvo que la notificación sea obligatoria
  * (alertas de seguridad).
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificacionService {
@@ -27,6 +33,7 @@ public class NotificacionService {
     private final NotificacionRepository notificaciones;
     private final UsuarioRepository usuarios;
     private final MailService correo;
+    private final InscripcionRepository inscripciones;
 
     @Transactional
     public Optional<Notificacion> notificar(Usuario usuario, String titulo, String mensaje, boolean obligatoria) {
@@ -82,5 +89,28 @@ public class NotificacionService {
         for (Usuario admin : usuarios.findByRolAndEstado(RolUsuario.ADMINISTRADOR, EstadoUsuario.ACTIVO)) {
             notificar(admin, titulo, mensaje, true);
         }
+    }
+
+    /**
+     * Avisa a los estudiantes con inscripción activa en el curso (contenido nuevo, tarea nueva, etc.).
+     * Un fallo al avisar nunca debe impedir la acción del instructor, por eso se registra y se sigue.
+     * Respeta la preferencia de cada estudiante (notificaciones deshabilitadas no reciben nada).
+     */
+    @Transactional
+    public int notificarInscritos(Long cursoId, String titulo, String mensaje) {
+        int enviados = 0;
+        for (Inscripcion i : inscripciones.findByCursoIdAndEstadoIn(cursoId, List.of(EstadoInscripcion.ACTIVA))) {
+            try {
+                if (notificar(i.getEstudiante(), recortar(titulo, 190), mensaje, false).isPresent()) enviados++;
+            } catch (RuntimeException e) {
+                log.warn("No se pudo notificar al estudiante de la inscripción {}: {}", i.getId(), e.getMessage());
+            }
+        }
+        return enviados;
+    }
+
+    public static String recortar(String texto, int max) {
+        if (texto == null) return "";
+        return texto.length() <= max ? texto : texto.substring(0, max - 1) + "…";
     }
 }

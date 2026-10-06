@@ -7,6 +7,7 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { CATEGORIAS } from "../../utils/format.js";
 import { Banner, Button, Card, OpcionCard, PageHeader, SelectField, Toggle } from "../../components/ui/index.jsx";
 import ConfirmarDialogo from "../../components/ConfirmarDialogo.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 const ICONO = { VISUAL: Eye, AUDITIVA: Ear, MOTORA: Hand, COGNITIVA: Brain };
 const FUENTES = ["Atkinson Hyperlegible Next", "Lexend", "Arial", "Verdana", "Sistema"];
@@ -35,6 +36,7 @@ export default function Accesibilidad() {
 
   return (
     <>
+      <VolverACursos />
       <PageHeader eyebrow="Accesibilidad" titulo="Ajusta la plataforma a ti" subtitulo="Los cambios se aplican de inmediato y se guardan solos." />
       {!persistenteEnServidor && <Banner tono="info" className="mb-5">Como {usuario.rol === "INSTRUCTOR" ? "instructor" : "administrador"}, tus ajustes se guardan solo en este dispositivo.</Banner>}
       <p className="mb-4 min-h-6 font-semibold" role="status">

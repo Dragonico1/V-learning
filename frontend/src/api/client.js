@@ -177,6 +177,17 @@ export const api = {
     borrarEvaluacion: (id) => d(client.delete(`/evaluaciones/${id}`)),
     agregarPregunta: (evaluacionId, datos) => d(client.post(`/evaluaciones/${evaluacionId}/preguntas`, datos)),
   },
+  tareas: {
+    delModulo: (moduloId) => d(client.get(`/modulos/${moduloId}/tareas`)),
+    entregar: (tareaId, datos) => d(client.put(`/tareas/${tareaId}/entrega`, datos)),
+    // Instructor
+    delModuloInstructor: (moduloId) => d(client.get(`/instructor/modulos/${moduloId}/tareas`)),
+    crear: (moduloId, datos) => d(client.post(`/modulos/${moduloId}/tareas`, datos)),
+    editar: (id, datos) => d(client.put(`/tareas/${id}`, datos)),
+    borrar: (id) => d(client.delete(`/tareas/${id}`)),
+    entregas: (id) => d(client.get(`/tareas/${id}/entregas`)),
+    calificar: (entregaId, datos) => d(client.put(`/entregas/${entregaId}/calificacion`, datos)),
+  },
   informes: {
     vista: (filtros) => d(client.post("/informes/vista", filtros)),
     generar: (filtros) => descargar(client.post("/informes", filtros, { responseType: "blob" }),

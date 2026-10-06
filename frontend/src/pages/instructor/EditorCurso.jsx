@@ -12,6 +12,7 @@ import ModuloEditor from "./ModuloEditor.jsx";
 import ContenidoEditor from "./ContenidoEditor.jsx";
 import { FormularioEvaluacion, FormularioPregunta } from "./EvaluacionEditor.jsx";
 import { tonoEstadoCurso } from "./constantes.js";
+import TareasModulo from "./TareasModulo.jsx";
 
 function DatosCurso({ curso, onGuardado }) {
   const { avisar } = useNotif();
@@ -124,7 +125,7 @@ function PestanaEvaluaciones({ curso, recargar }) {
 
   return (
     <div className="grid gap-5">
-      <Banner tono="info">Una evaluación se habilita para el estudiante cuando completa el módulo. Si ya tiene intentos, no se puede reescribir ni eliminar.</Banner>
+      <Banner tono="info">Una evaluación se habilita para el estudiante cuando completa el módulo. Si ya tiene intentos, no se puede reescribir ni eliminar. Las tareas las entregan los estudiantes y las calificas tú, con retroalimentación.</Banner>
       {curso.modulos.length === 0 && <Vacio titulo="Primero crea un módulo">Las evaluaciones se asocian a un módulo.</Vacio>}
       {curso.modulos.map((m) => (
         <Card key={m.id} as="section" aria-labelledby={`e-${m.id}`}>
@@ -153,6 +154,7 @@ function PestanaEvaluaciones({ curso, recargar }) {
               ))}
             </ul>
           )}
+          <TareasModulo moduloId={m.id} />
         </Card>
       ))}
 
@@ -220,7 +222,7 @@ export default function EditorCurso() {
         )} />
 
       <Pestanas etiqueta="Secciones del curso" activa={pestana} onCambiar={setPestana} pestanas={[
-        { id: "contenido", texto: "Contenido" }, { id: "evaluaciones", texto: "Evaluaciones" },
+        { id: "contenido", texto: "Contenido" }, { id: "evaluaciones", texto: "Evaluaciones y tareas" },
         { id: "estudiantes", texto: "Estudiantes" }, { id: "datos", texto: "Datos del curso" }]} />
       <div role="tabpanel" id={`panel-${pestana}`} aria-labelledby={`tab-${pestana}`}>
         {pestana === "contenido" && <PestanaContenido curso={curso} recargar={recargar} />}

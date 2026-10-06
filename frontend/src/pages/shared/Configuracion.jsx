@@ -5,7 +5,9 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { VARK } from "../../utils/format.js";
+import { fijarSonido, reproducirAviso, sonidoActivado } from "../../utils/sonido.js";
 import { Banner, Button, Card, Cargando, EstadoError, OpcionCard, PageHeader, SelectField, Toggle } from "../../components/ui/index.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 function Notificaciones() {
   const { avisar } = useNotif();
@@ -13,6 +15,8 @@ function Notificaciones() {
   const [habilitadas, setHabilitadas] = useState(true);
   const [canal, setCanal] = useState("PLATAFORMA");
   const [trabajando, setTrabajando] = useState(false);
+  const [sonido, setSonido] = useState(sonidoActivado);
+  const cambiarSonido = (v) => { setSonido(v); fijarSonido(v); if (v) reproducirAviso(); };
   useEffect(() => { if (datos) { setHabilitadas(datos.habilitadas); setCanal(datos.canal ?? "PLATAFORMA"); } }, [datos]);
   if (cargando && !datos) return <Cargando />;
   if (error && !datos) return <EstadoError mensaje={error} onReintentar={recargar} />;
@@ -25,6 +29,7 @@ function Notificaciones() {
     <Card as="section" aria-labelledby="nt">
       <h2 id="nt" className="mb-2 text-xl">Notificaciones</h2>
       <Toggle label="Recibir recordatorios y avisos" descripcion="Cursos con avance detenido, evaluaciones pendientes y logros." checked={habilitadas} onChange={setHabilitadas} />
+      <Toggle label="Sonido al recibir una notificación" descripcion="Un tono corto en este dispositivo. El aviso visual siempre aparece." checked={sonido} onChange={cambiarSonido} />
       <SelectField label="¿Por dónde quieres recibirlas?" value={canal} disabled={!habilitadas} onChange={(e) => setCanal(e.target.value)} className="mb-4 max-w-sm">
         <option value="PLATAFORMA">Solo en la plataforma</option>
         <option value="CORREO">Plataforma y correo institucional</option>
@@ -77,6 +82,7 @@ export default function Configuracion() {
   const { usuario } = useAuth();
   return (
     <>
+      <VolverACursos />
       <PageHeader eyebrow="Configuración" titulo="Tus preferencias" subtitulo="Notificaciones, métodos de aprendizaje y accesibilidad." />
       <div className="grid max-w-3xl gap-6">
         <Notificaciones />

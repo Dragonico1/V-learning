@@ -7,6 +7,7 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { ROL_TEXTO, fmtHora, fmtDia } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, EstadoError, PageHeader, SelectField, TextField, Vacio } from "../../components/ui/index.jsx";
+import VolverACursos from "../../components/VolverACursos.jsx";
 
 function cursosDelRol(rol) {
   if (rol === "ESTUDIANTE") return api.cursos.mios();
@@ -134,6 +135,7 @@ export default function Comunidad() {
 
   return (
     <>
+      <VolverACursos />
       <PageHeader eyebrow="Comunidad" titulo="Conversación del curso" subtitulo="Resuelve dudas con tu grupo. Sé respetuoso: los mensajes se pueden reportar." />
       {lista.length === 0 ? (
         <Vacio titulo="Todavía no tienes cursos con comunidad">{usuario.rol === "ESTUDIANTE" && <p>Inscríbete en un curso desde <Link className="font-bold underline" to="/cursos">Mis cursos</Link>.</p>}</Vacio>

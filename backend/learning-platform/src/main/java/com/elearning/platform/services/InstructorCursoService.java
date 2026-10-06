@@ -33,6 +33,7 @@ public class InstructorCursoService {
     private final EvaluacionRepository evaluaciones;
     private final InstructorRepository instructores;
     private final AuditoriaService auditoria;
+    private final NotificacionService notificaciones;
 
     @Transactional(readOnly = true)
     public List<CursoResumen> listar(Long instructorId) {
@@ -207,9 +208,15 @@ public class InstructorCursoService {
             throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "CONTENIDO_NO_CONFORME",
                     "No se puede publicar: " + String.join(" ", faltan));
         }
+        boolean eraVisible = c.isPublicado();
         c.publicar();
         contenidos.save(c);
         auditoria.registrar(instructorId, "CONTENIDO_PUBLICADO", "contenidos/" + contenidoId, ResultadoAuditoria.PERMITIDO, ip);
+        Curso curso = c.getModulo().getCurso();
+        if (!eraVisible && curso.getEstado() == EstadoCurso.PUBLICADO) {
+            notificaciones.notificarInscritos(curso.getId(), "Nuevo contenido: " + c.getTitulo(),
+                    "Hay un contenido nuevo en «" + curso.getTitulo() + "» (módulo " + c.getModulo().getTitulo() + "): «" + c.getTitulo() + "».");
+        }
         return new PublicacionRespuesta(c.getId(), true, ConformidadAccesibilidad.advertencias(c));
     }
 
