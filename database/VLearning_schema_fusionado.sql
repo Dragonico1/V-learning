@@ -930,5 +930,70 @@ GO
 -- ================================================================
 
 -- ================================================================
+-- Configuración final del administrador SQL Server se agrega a continuación.
+-- ================================================================
+-- V-Learning - Login administrativo de SQL Server
+-- Crea vlearning_admin con privilegios equivalentes a SA.
+--
+-- ADVERTENCIA: sysadmin tiene control TOTAL sobre la instancia SQL Server.
+-- Credenciales solicitadas:
+--   Login:    vlearning_admin
+--   Password: Juan12345678
+-- ================================================================
+
+USE master;
+GO
+
+IF SUSER_ID(N'vlearning_admin') IS NULL
+BEGIN
+    CREATE LOGIN [vlearning_admin]
+        WITH PASSWORD = N'Juan12345678',
+             CHECK_POLICY = ON,
+             CHECK_EXPIRATION = OFF,
+             DEFAULT_DATABASE = [vlearning];
+END
+ELSE
+BEGIN
+    ALTER LOGIN [vlearning_admin]
+        WITH PASSWORD = N'Juan12345678',
+             CHECK_POLICY = ON,
+             CHECK_EXPIRATION = OFF,
+             DEFAULT_DATABASE = [vlearning];
+END
+GO
+
+-- Mismos privilegios de servidor que SA: pertenencia a sysadmin.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.server_role_members srm
+    INNER JOIN sys.server_principals role_principal
+        ON role_principal.principal_id = srm.role_principal_id
+    INNER JOIN sys.server_principals member_principal
+        ON member_principal.principal_id = srm.member_principal_id
+    WHERE role_principal.name = N'sysadmin'
+      AND member_principal.name = N'vlearning_admin'
+)
+BEGIN
+    ALTER SERVER ROLE [sysadmin] ADD MEMBER [vlearning_admin];
+END
+GO
+
+-- Usuario de base de datos asociado al login.
+USE [vlearning];
+GO
+
+IF DATABASE_PRINCIPAL_ID(N'vlearning_admin') IS NULL
+BEGIN
+    CREATE USER [vlearning_admin] FOR LOGIN [vlearning_admin];
+END
+ELSE
+BEGIN
+    ALTER USER [vlearning_admin] WITH LOGIN = [vlearning_admin];
+END
+GO
+
+PRINT 'V-Learning: esquema creado y vlearning_admin configurado como sysadmin.';
+GO
+
 -- FIN DEL ESQUEMA
 -- ================================================================

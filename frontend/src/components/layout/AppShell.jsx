@@ -5,6 +5,7 @@ import { useTutor } from "../../context/TutorContext.jsx";
 import { Sidebar } from "./Sidebar.jsx";
 import { Topbar } from "./Topbar.jsx";
 import { TutorPanel } from "./TutorPanel.jsx";
+import { TutorFlotante } from "./TutorFlotante.jsx";
 import { ShortcutsDialog } from "./ShortcutsDialog.jsx";
 import { cx } from "../../utils/cx.js";
 
@@ -14,10 +15,12 @@ export function AppShell() {
   const { abierto: tutorAbierto, alternar } = useTutor();
   const [menu, setMenu] = useState(false);
   const [atajos, setAtajos] = useState(false);
+  const [panelSlot, setPanelSlot] = useState(null);
   const buscador = useRef(null);
   const principal = useRef(null);
   const { pathname } = useLocation();
   const esEstudiante = usuario.rol === "ESTUDIANTE";
+  const conPanel = esEstudiante && pathname === "/inicio" && !tutorAbierto;
 
   // Al cambiar de pantalla, el foco vuelve al contenido y se cierra el cajón móvil.
   useEffect(() => {
@@ -29,10 +32,24 @@ export function AppShell() {
   useEffect(() => {
     const tecla = (e) => {
       const el = e.target;
-      const escribiendo = el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); buscador.current?.focus(); return; }
-      if (e.altKey && e.key.toLowerCase() === "t" && esEstudiante) { e.preventDefault(); alternar(); return; }
-      if (e.key === "?" && !escribiendo) { e.preventDefault(); setAtajos(true); }
+      const escribiendo =
+        el instanceof HTMLElement &&
+        (el.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        buscador.current?.focus();
+        return;
+      }
+      if (e.altKey && e.key.toLowerCase() === "t" && esEstudiante) {
+        e.preventDefault();
+        alternar();
+        return;
+      }
+      if (e.key === "?" && !escribiendo) {
+        e.preventDefault();
+        setAtajos(true);
+      }
     };
     document.addEventListener("keydown", tecla);
     return () => document.removeEventListener("keydown", tecla);
@@ -40,22 +57,53 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen">
-      <a href="#contenido" className="sr-only-focusable fixed left-3 top-3 z-[70] rounded-lg bg-primary-600 px-4 py-2 font-bold text-white">Saltar al contenido principal</a>
+      <a
+        href="#contenido"
+        className="sr-only-focusable fixed left-3 top-3 z-[70] rounded-lg bg-primary-600 px-4 py-2 font-bold text-white"
+      >
+        Saltar al contenido principal
+      </a>
       <Sidebar abierto={menu} onCerrar={() => setMenu(false)} />
       <div className="md:pl-[72px] xl:pl-[246px]">
-        <Topbar onMenu={() => setMenu(true)} buscadorRef={buscador} />
-        <div className="flex">
-          <main id="contenido" ref={principal} tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 outline-none md:px-8 md:py-8">
-            <div className="mx-auto max-w-[1180px]"><Outlet /></div>
-          </main>
-          {esEstudiante && tutorAbierto && (
-            <div className={cx("fixed inset-0 z-[55] bg-white xl:sticky xl:inset-auto xl:top-[70px] xl:z-20 xl:h-[calc(100vh-70px)] xl:w-[420px] xl:shrink-0 xl:border-l xl:border-line",
-              "max-xl:md:left-auto max-xl:md:w-[420px] max-xl:md:border-l max-xl:md:border-line max-xl:md:shadow-xl")}>
-              <TutorPanel />
+        <div className="flex flex-col xl:flex-row">
+          <div className="min-w-0 xl:flex-1">
+            <Topbar
+              onMenu={() => setMenu(true)}
+              buscadorRef={buscador}
+              cuentaEnPanel={conPanel}
+            />
+            <div className="flex">
+              <main
+                id="contenido"
+                ref={principal}
+                tabIndex={-1}
+                className="min-w-0 flex-1 px-4 py-6 outline-none! shadow-none! rounded-none! md:px-8 md:py-8"
+              >
+                <div className="mx-auto max-w-[1180px]">
+                  <Outlet context={{ panelSlot }} />
+                </div>
+              </main>
+              {esEstudiante && tutorAbierto && (
+                <div
+                  className={cx(
+                    "fixed inset-0 z-[55] bg-white xl:sticky xl:inset-auto xl:top-[70px] xl:z-20 xl:h-[calc(100vh-70px)] xl:w-[420px] xl:shrink-0 xl:border-l xl:border-line",
+                    "max-xl:md:left-auto max-xl:md:w-[420px] max-xl:md:border-l max-xl:md:border-line max-xl:md:shadow-xl",
+                  )}
+                >
+                  <TutorPanel />
+                </div>
+              )}
             </div>
+          </div>
+          {conPanel && (
+            <div
+              ref={setPanelSlot}
+              className="bg-surface xl:sticky xl:top-0 xl:z-30 xl:h-screen xl:w-[300px] xl:shrink-0 xl:self-start xl:border-l xl:border-line"
+            />
           )}
         </div>
       </div>
+      {esEstudiante && <TutorFlotante conPanel={conPanel} />}
       <ShortcutsDialog abierto={atajos} onCerrar={() => setAtajos(false)} />
     </div>
   );
