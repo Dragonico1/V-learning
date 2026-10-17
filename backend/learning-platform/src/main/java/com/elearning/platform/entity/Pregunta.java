@@ -23,7 +23,7 @@ public class Pregunta {
     @JoinColumn(name = "evaluacion_id")
     private Evaluacion evaluacion;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String enunciado;
 
     @Enumerated(EnumType.STRING)

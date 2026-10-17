@@ -27,7 +27,7 @@ public class Mensaje {
     @JoinColumn(name = "curso_id")
     private Curso curso;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String contenido;
 
     @Column(name = "fecha_envio", nullable = false)

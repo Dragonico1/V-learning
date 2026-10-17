@@ -31,7 +31,7 @@ public class ConsultaTutor {
     @JoinColumn(name = "contenido_id")
     private Contenido contenido;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String pregunta;
 
     @Column(nullable = false)

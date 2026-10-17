@@ -23,7 +23,7 @@ public class Sesion {
     private Long usuarioId;
 
     /** SHA-256 (hex) del JWT emitido. El token en claro nunca se guarda. */
-    @Column(name = "token_jwt", nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(name = "token_jwt", nullable = false, columnDefinition = "TEXT")
     private String tokenHash;
 
     @Column(name = "fecha_inicio", nullable = false)

@@ -23,7 +23,7 @@ public class RespuestaTutor {
     @JoinColumn(name = "consulta_id")
     private ConsultaTutor consulta;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String contenido;
 
     @Enumerated(EnumType.STRING)

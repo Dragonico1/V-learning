@@ -22,7 +22,7 @@ public class ReglaGamificacion {
     @Column(nullable = false, length = 150)
     private String nombre;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(nullable = false, length = 100)

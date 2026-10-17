@@ -26,7 +26,7 @@ public class Modulo {
     @Column(nullable = false, length = 200)
     private String titulo;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(nullable = false)

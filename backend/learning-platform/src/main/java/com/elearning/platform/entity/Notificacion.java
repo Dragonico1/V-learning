@@ -26,7 +26,7 @@ public class Notificacion {
     @Column(nullable = false, length = 200)
     private String titulo;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String mensaje;
 
     @Column(name = "fecha_creacion", nullable = false)

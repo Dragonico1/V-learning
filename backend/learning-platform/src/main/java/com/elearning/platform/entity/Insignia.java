@@ -22,7 +22,7 @@ public class Insignia {
     @Column(nullable = false, length = 150, unique = true)
     private String nombre;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "puntos_requeridos", nullable = false)

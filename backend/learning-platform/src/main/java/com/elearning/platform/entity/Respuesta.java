@@ -27,7 +27,7 @@ public class Respuesta {
     @JoinColumn(name = "pregunta_id")
     private Pregunta pregunta;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String valor;
 
     @Column(name = "es_correcta")

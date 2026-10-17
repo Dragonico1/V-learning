@@ -45,10 +45,10 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
-		<!-- SQL Server (la versión la administra el BOM de Spring Boot) -->
+		<!-- PostgreSQL (la versión la administra el BOM de Spring Boot) -->
 		<dependency>
-			<groupId>com.microsoft.sqlserver</groupId>
-			<artifactId>mssql-jdbc</artifactId>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 

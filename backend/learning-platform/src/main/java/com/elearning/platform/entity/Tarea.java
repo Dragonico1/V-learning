@@ -24,7 +24,7 @@ public class Tarea {
     @Column(nullable = false, length = 200)
     private String titulo;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "puntaje_maximo", nullable = false, precision = 8, scale = 2)
