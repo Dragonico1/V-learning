@@ -133,6 +133,7 @@ export const api = {
   },
   logros: {
     ver: () => d(client.get("/logros")),
+    actividad: (dias = 7) => d(client.get("/logros/actividad", { params: { dias } })),
     privacidad: (mostrarEnRanking) => d(client.put("/logros/privacidad", { mostrarEnRanking })),
     ranking: (cursoId) => d(client.get(`/cursos/${cursoId}/ranking`)),
   },

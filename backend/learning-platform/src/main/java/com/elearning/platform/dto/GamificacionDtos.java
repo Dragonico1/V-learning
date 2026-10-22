@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +28,12 @@ public final class GamificacionDtos {
 
     public record RankingRespuesta(Long cursoId, String periodo, LocalDateTime actualizadoEn, List<PosicionDto> posiciones,
                                    Integer miPosicion, boolean modoPrivado) {}
+
+    /** Puntos ganados en un día. {@code etiqueta} es la inicial del día (L, M, X, J, V, S, D). */
+    public record ActividadDia(LocalDate fecha, String etiqueta, int puntos, boolean esHoy) {}
+
+    /** Actividad de los últimos N días (el último elemento de {@code dias} es hoy). */
+    public record ActividadRespuesta(int totalDias, int totalPuntos, int puntosHoy, List<ActividadDia> dias) {}
 
     // ----- Administración -----
     public record ReglaRequest(

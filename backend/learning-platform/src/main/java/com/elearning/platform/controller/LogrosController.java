@@ -32,6 +32,13 @@ public class LogrosController {
         return gamificacion.logros(u.id());
     }
 
+    /** Puntos ganados por día en los últimos N días (por defecto 7); alimenta la gráfica de actividad del inicio. */
+    @GetMapping("/logros/actividad")
+    public ActividadRespuesta actividad(@AuthenticationPrincipal UsuarioPrincipal u,
+                                        @RequestParam(defaultValue = "7") int dias) {
+        return gamificacion.actividad(u.id(), dias);
+    }
+
     @PutMapping("/logros/privacidad")
     public LogrosRespuesta privacidad(@AuthenticationPrincipal UsuarioPrincipal u, @Valid @RequestBody PrivacidadRequest req) {
         return gamificacion.cambiarPrivacidad(u.id(), req.mostrarEnRanking());
