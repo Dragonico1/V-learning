@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { KeyRound, LucideZap, Plus, Search } from "lucide-react";
+import { KeyRound, Plus, Search } from "lucide-react";
+
 import { api, mensajeError, detallesError } from "../../api/client.js";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
@@ -35,6 +36,7 @@ function Credenciales({ r, onCerrar }) {
       <Banner tono={r.enviadoPorCorreo ? "ok" : "warn"} rol="status">
         {r.mensaje}
       </Banner>
+
       {r.contrasenaTemporal && (
         <div>
           <p className="font-bold text-strong">
@@ -52,6 +54,7 @@ function Credenciales({ r, onCerrar }) {
           </p>
         </div>
       )}
+
       <div>
         <Button onClick={onCerrar}>Entendido</Button>
       </div>
@@ -71,12 +74,15 @@ function FormularioUsuario({ onCreado, onCancelar }) {
   const [error, setError] = useState(null);
   const [campos, setCampos] = useState({});
   const [trabajando, setTrabajando] = useState(false);
+
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
+
   const enviar = async (e) => {
     e.preventDefault();
     setError(null);
     setCampos({});
     setTrabajando(true);
+
     try {
       const cuerpo = {
         ...f,
@@ -92,10 +98,13 @@ function FormularioUsuario({ onCreado, onCancelar }) {
       setTrabajando(false);
     }
   };
+
   const listo = f.nombre.trim() && f.correo.trim();
+
   return (
     <form onSubmit={enviar} noValidate className="grid gap-4">
       {error && <Banner tono="err">{error}</Banner>}
+
       <TextField
         label="Nombre completo"
         required
@@ -103,6 +112,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
         onChange={set("nombre")}
         error={campos.nombre}
       />
+
       <TextField
         label="Correo institucional"
         type="email"
@@ -111,6 +121,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
         onChange={set("correo")}
         error={campos.correo}
       />
+
       <SelectField label="Rol" value={f.rol} onChange={set("rol")}>
         {Object.entries(ROL_TEXTO).map(([v, t]) => (
           <option key={v} value={v}>
@@ -118,6 +129,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
           </option>
         ))}
       </SelectField>
+
       {f.rol === "ESTUDIANTE" && (
         <TextField
           label="Programa académico"
@@ -126,6 +138,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
           error={campos.programaAcademico}
         />
       )}
+
       {f.rol === "INSTRUCTOR" && (
         <TextField
           label="Especialidad"
@@ -134,6 +147,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
           error={campos.especialidad}
         />
       )}
+
       {f.rol !== "ADMINISTRADOR" && (
         <TextField
           label="Código (opcional, se genera si lo dejas vacío)"
@@ -142,6 +156,7 @@ function FormularioUsuario({ onCreado, onCancelar }) {
           error={campos.codigo}
         />
       )}
+
       <div className="flex flex-wrap gap-3">
         <Button
           type="submit"
@@ -165,6 +180,7 @@ export default function Usuarios() {
   const [filtros, setFiltros] = useState({ q: "", rol: "", estado: "" });
   const [aplicados, setAplicados] = useState(filtros);
   const [pagina, setPagina] = useState(0);
+
   const { datos, cargando, error, recargar } = useAsync(
     () =>
       api.admin.usuarios({
@@ -176,6 +192,7 @@ export default function Usuarios() {
       }),
     [aplicados, pagina],
   );
+
   const [crear, setCrear] = useState(false);
   const [cred, setCred] = useState(null);
 
@@ -184,6 +201,7 @@ export default function Usuarios() {
     setPagina(0);
     setAplicados(filtros);
   };
+
   const cambiarEstado = async (u, estado) => {
     try {
       await api.admin.estadoUsuario(u.id, estado);
@@ -196,6 +214,7 @@ export default function Usuarios() {
       avisar(mensajeError(e), "error");
     }
   };
+
   const reenviar = async (u) => {
     try {
       setCred(await api.admin.reenviar(u.id));
@@ -204,6 +223,7 @@ export default function Usuarios() {
       avisar(mensajeError(e), "error");
     }
   };
+
   const paginas = datos
     ? Math.max(1, Math.ceil(datos.total / datos.tamano))
     : 1;
@@ -220,6 +240,7 @@ export default function Usuarios() {
           </Button>
         }
       />
+
       <Card
         as="form"
         onSubmit={buscar}
@@ -232,6 +253,7 @@ export default function Usuarios() {
           value={filtros.q}
           onChange={(e) => setFiltros({ ...filtros, q: e.target.value })}
         />
+
         <SelectField
           label="Rol"
           value={filtros.rol}
@@ -244,6 +266,7 @@ export default function Usuarios() {
             </option>
           ))}
         </SelectField>
+
         <SelectField
           label="Estado"
           value={filtros.estado}
@@ -256,6 +279,7 @@ export default function Usuarios() {
             </option>
           ))}
         </SelectField>
+
         <Button type="submit" icono={Search}>
           Buscar
         </Button>
@@ -274,6 +298,7 @@ export default function Usuarios() {
           <p className="mb-2 text-sm" role="status">
             {datos.total} usuario(s) encontrados.
           </p>
+
           <div className="overflow-x-auto rounded-card border border-line bg-surface">
             <table className="w-full min-w-[1120px] text-left">
               <caption className="sr-only">Usuarios de la plataforma</caption>
@@ -302,6 +327,7 @@ export default function Usuarios() {
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {datos.contenido.map((u) => (
                   <tr key={u.id} className="border-t border-line align-top">
@@ -311,13 +337,16 @@ export default function Usuarios() {
                       </span>
                       <span className="text-sm">{u.correo}</span>
                     </th>
-                    <td className="p-3">{ROL_TEXTO[u.rol]}</td>
+
+                    <td className="p-3">{ROL_TEXTO[u.rol] ?? u.rol}</td>
+
                     <td className="whitespace-nowrap p-3 text-sm">
                       {u.codigo ||
                         (u.rol === "ADMINISTRADOR"
                           ? "No aplica"
                           : "Sin especificar")}
                     </td>
+
                     <td className="p-3 text-sm">
                       {u.programaAcademico ||
                         u.especialidad ||
@@ -325,11 +354,22 @@ export default function Usuarios() {
                           ? "No aplica"
                           : "Sin especificar")}
                     </td>
+
+                    {/* Celda de estado: faltaba y desplazaba las columnas siguientes. */}
+                    <td className="p-3 text-sm">
+                      <Badge tono={TONO_ESTADO[u.estado] ?? "gris"}>
+                        {ESTADO_USUARIO_TEXTO[u.estado] ??
+                          u.estado ??
+                          "Sin estado"}
+                      </Badge>
+                    </td>
+
                     <td className="p-3 text-sm">
                       {u.ultimoAcceso
                         ? fmtFecha(u.ultimoAcceso)
                         : "Aún no ha ingresado"}
                     </td>
+
                     <td className="p-3">
                       <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap [&_button]:min-h-0 [&_button]:px-2.5 [&_button]:py-1.5 [&_button]:text-xs [&_svg]:h-3.5 [&_svg]:w-3.5">
                         {u.estado === "BLOQUEADO" || u.estado === "INACTIVO" ? (
@@ -349,6 +389,7 @@ export default function Usuarios() {
                             <span className="sr-only"> a {u.nombre}</span>
                           </Button>
                         )}
+
                         {u.estado === "ACTIVO" && (
                           <Button
                             variante="ghost"
@@ -358,6 +399,7 @@ export default function Usuarios() {
                             <span className="sr-only"> a {u.nombre}</span>
                           </Button>
                         )}
+
                         <Button
                           variante="ghost"
                           icono={KeyRound}
@@ -373,6 +415,7 @@ export default function Usuarios() {
               </tbody>
             </table>
           </div>
+
           <nav aria-label="Paginación" className="mt-4 flex items-center gap-3">
             <Button
               variante="secondary"
@@ -411,6 +454,7 @@ export default function Usuarios() {
           />
         )}
       </Dialogo>
+
       <Dialogo
         abierto={Boolean(cred)}
         onCerrar={() => setCred(null)}
