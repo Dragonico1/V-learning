@@ -23,7 +23,7 @@ public class OpcionRespuesta {
     @JoinColumn(name = "pregunta_id")
     private Pregunta pregunta;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(MAX)")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String texto;
 
     @Column(nullable = false)

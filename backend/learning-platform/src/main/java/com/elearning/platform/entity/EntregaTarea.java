@@ -26,7 +26,7 @@ public class EntregaTarea {
     @JoinColumn(name = "estudiante_id")
     private Estudiante estudiante;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String texto;
 
     @Column(length = 500)
@@ -38,7 +38,7 @@ public class EntregaTarea {
     @Column(precision = 8, scale = 2)
     private BigDecimal puntaje;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String retroalimentacion;
 
     @Column(name = "fecha_calificacion")

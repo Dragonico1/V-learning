@@ -26,7 +26,7 @@ public class Contenido {
     @Column(nullable = false, length = 200)
     private String titulo;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "duracion_minutos")
@@ -45,7 +45,7 @@ public class Contenido {
     @Column(name = "url_recurso", length = 500)
     private String urlRecurso;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String cuerpo;
 
     public void publicar() {

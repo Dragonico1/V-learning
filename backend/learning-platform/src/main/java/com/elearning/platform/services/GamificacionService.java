@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,7 @@ public class GamificacionService {
     private final ReglaGamificacionRepository reglas;
     private final EstudianteRepository estudiantes;
     private final NotificacionService notificaciones;
+    private final HistorialPuntosRepository historial;
 
     /** Puntos del evento: la regla del administrador si existe; si no, el valor por defecto. */
     @Transactional(readOnly = true)
@@ -55,6 +57,7 @@ public class GamificacionService {
         p.agregarPuntos(puntos);
         p.setNivel(EventosGamificacion.nivelPara(p.getPuntos()));
         perfiles.save(p);
+        historial.save(new HistorialPuntos(estudianteId, puntos, motivo));
         notificaciones.notificar(estudianteId, "Ganaste " + puntos + " puntos", motivo, false, "/logros");
 
         if (p.getNivel() > nivelAntes) {
@@ -97,6 +100,43 @@ public class GamificacionService {
         int dentroDelNivel = p.getPuntos() - (p.getNivel() - 1) * EventosGamificacion.PUNTOS_POR_NIVEL;
         int pct = Math.min(100, Math.max(0, dentroDelNivel * 100 / EventosGamificacion.PUNTOS_POR_NIVEL));
         return new LogrosRespuesta(p.getPuntos(), p.getNivel(), siguiente, pct, p.isVisibleRanking(), obt, pend);
+    }
+
+    /**
+     * Puntos ganados por día en los últimos {@code dias} días (incluye hoy), leídos del historial.
+     * Los días sin actividad aparecen con 0 para que la gráfica siempre tenga todas las barras.
+     */
+    @Transactional(readOnly = true)
+    public ActividadRespuesta actividad(Long estudianteId, int dias) {
+        int n = Math.min(Math.max(dias, 1), 31);
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicio = hoy.minusDays(n - 1L);
+        Map<LocalDate, Integer> porDia = new HashMap<>();
+        for (HistorialPuntos h : historial.desde(estudianteId, inicio.atStartOfDay())) {
+            porDia.merge(h.getFecha().toLocalDate(), h.getPuntos(), Integer::sum);
+        }
+        List<ActividadDia> lista = new ArrayList<>();
+        int total = 0;
+        for (int i = 0; i < n; i++) {
+            LocalDate f = inicio.plusDays(i);
+            int pts = porDia.getOrDefault(f, 0);
+            total += pts;
+            lista.add(new ActividadDia(f, etiquetaDia(f), pts, f.equals(hoy)));
+        }
+        return new ActividadRespuesta(n, total, lista.get(n - 1).puntos(), lista);
+    }
+
+    /** Inicial del día en español: L, M, X (miércoles), J, V, S, D. */
+    static String etiquetaDia(LocalDate f) {
+        return switch (f.getDayOfWeek()) {
+            case MONDAY -> "L";
+            case TUESDAY -> "M";
+            case WEDNESDAY -> "X";
+            case THURSDAY -> "J";
+            case FRIDAY -> "V";
+            case SATURDAY -> "S";
+            case SUNDAY -> "D";
+        };
     }
 
     /** Modo privado: el estudiante conserva puntos y nivel pero no figura en la tabla pública. */

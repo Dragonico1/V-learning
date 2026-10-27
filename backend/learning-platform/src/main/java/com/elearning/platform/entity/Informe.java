@@ -30,7 +30,7 @@ public class Informe {
     @Column(nullable = false, length = 50)
     private FormatoInforme formato;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String filtros;
 
     @PrePersist

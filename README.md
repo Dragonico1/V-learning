@@ -52,7 +52,7 @@ Proyecto de aula · Tecnológico de Antioquia I.U. · Autores: Manuela Bolívar 
 
 ## 2. Arquitectura monolítica
 
-Un solo repositorio, un solo backend (Spring Boot) y un solo frontend (React). La base de datos es SQL Server; el Tutor de IA corre en un Ollama local.
+Un solo repositorio, un solo backend (Spring Boot) y un solo frontend (React). La base de datos es PostgreSQL; el Tutor de IA corre en un Ollama local.
 
 ```mermaid
 flowchart LR
@@ -67,7 +67,7 @@ flowchart LR
         REP["Repositorios JPA"]
         SEC --> CTL --> SRV --> REP
     end
-    DB[("SQL Server<br/>vlearning")]
+    DB[("PostgreSQL<br/>vlearning")]
     OLL["Ollama local<br/>gemma2:2b"]
     FE -- "/api (HTTP) · /ws (WebSocket)" --> SEC
     REP --> DB
@@ -88,7 +88,7 @@ flowchart LR
 | Seguridad | JWT (jjwt 0.12.7), BCrypt, OTP de 6 dígitos, RBAC con `@PreAuthorize` |
 | Documentos | Apache POI (Excel), OpenPDF 1.3.x (PDF) |
 | API docs | springdoc-openapi 2.8.9 (Swagger UI) |
-| Base de datos | Microsoft SQL Server (T-SQL), `mssql-jdbc`; el esquema lo crea `database/01_schema.sql` (Hibernate con `ddl-auto=none`) |
+| Base de datos | PostgreSQL 14 o superior, driver `org.postgresql`; el esquema lo crea `database/postgresql/01_schema.sql` (Hibernate con `ddl-auto=none`) |
 | Frontend | React 19, Vite 8, Tailwind 4 (`@tailwindcss/vite`), react-router-dom 7, axios, lucide-react |
 | Fuentes | Atkinson Hyperlegible Next (por defecto), Lexend (modo dislexia), sistema |
 | IA | Ollama local (`gemma2:2b`; alternativas `qwen2.5:1.5b`, `llama3.2:1b`), solo texto |
@@ -102,7 +102,10 @@ v-learning-platform/
 ├─ README.md
 ├─ package.json
 ├─ database/
-│  └─ 01_schema.sql                  Esquema T-SQL (ampliaciones marcadas [EXT])
+│  ├─ postgresql/
+│  │  ├─ 00_crear_bd.sql             Crea el rol vlearning_admin y la base vlearning
+│  │  └─ 01_schema.sql               Esquema PostgreSQL (ampliaciones marcadas [EXT])
+│  └─ sqlserver_anterior.sql         Esquema T-SQL anterior (solo referencia)
 ├─ docs/
 │  └─ img/                           Imágenes del README (sección 12)
 ├─ backend/learning-platform/        Monolito Spring Boot
@@ -135,7 +138,7 @@ v-learning-platform/
 |---|---|
 | JDK | 21 |
 | Node.js | 20 o superior |
-| SQL Server + SSMS | 2019 o superior (puerto 1433, autenticación SQL habilitada) |
+| PostgreSQL | 14 o superior (puerto 5432) |
 | Ollama | Última versión (solo para el Tutor de IA) |
 
 ---
@@ -144,10 +147,17 @@ v-learning-platform/
 
 ### 6.1 Base de datos
 
-1. Abre SSMS y conéctate a tu instancia.
-2. Abre `database/01_schema.sql` y ejecútalo completo. **Borra y recrea** la base `vlearning`.
-3. Crea el usuario de la aplicación y bloquea la modificación de la auditoría (bloque comentado al final del script).
-4. **Si tu base ya existía** (creada antes de agregar las tareas calificables), no la recrees: ejecuta, en orden, `database/02_tareas.sql` (si aún no lo hiciste: tablas `tareas` y `entregas_tarea`) y `database/03_mejoras.sql` (fecha límite en evaluaciones, destino de las notificaciones y moderación de mensajes). Ambos son idempotentes y no borran datos.
+1. Crea el rol y la base (como superusuario, una sola vez):
+   ```bash
+   psql -U postgres -v admin_password="<contraseña-segura>" -f database/postgresql/00_crear_bd.sql
+   ```
+   El rol `vlearning_admin` es dueño de la base, no superusuario. Ninguna contraseña queda en el repositorio.
+2. Crea las tablas (**borra y recrea** las tablas de `vlearning`):
+   ```bash
+   psql -U vlearning_admin -d vlearning -f database/postgresql/01_schema.sql
+   ```
+3. Opcional: crea un rol de aplicación sin permiso de modificar la auditoría (bloque comentado al final del script).
+4. **Datos del SQL Server anterior:** no se migran automáticamente. El esquema anterior se conserva en `database/sqlserver_anterior.sql`; si necesitas los datos, usa `pgloader` o exporta e importa por CSV.
 
 ### 6.2 Backend
 
@@ -155,7 +165,7 @@ Define las variables de entorno y arranca:
 
 ```powershell
 # Windows (PowerShell)
-$env:DB_USER="vlearning_app"
+$env:DB_USER="vlearning_admin"
 $env:DB_PASSWORD="<tu-contraseña>"
 $env:JWT_SECRET="<cadena-aleatoria-de-al-menos-32-caracteres>"
 cd backend/learning-platform
@@ -164,14 +174,14 @@ cd backend/learning-platform
 
 ```bash
 # Linux / macOS
-export DB_USER=vlearning_app DB_PASSWORD='<tu-contraseña>' JWT_SECRET='<cadena-aleatoria-32+>'
+export DB_USER=vlearning_admin DB_PASSWORD='<tu-contraseña>' JWT_SECRET='<cadena-aleatoria-32+>'
 cd backend/learning-platform && ./mvnw spring-boot:run
 ```
 
 | Variable | Obligatoria | Por defecto |
 |---|---|---|
 | `DB_USER` / `DB_PASSWORD` | Sí | — |
-| `DB_URL` | No | `jdbc:sqlserver://localhost:1433;databaseName=vlearning;encrypt=true;trustServerCertificate=true` |
+| `DB_URL` | No | `jdbc:postgresql://localhost:5432/vlearning` |
 | `JWT_SECRET` | Sí | — |
 | `OLLAMA_URL` / `OLLAMA_MODEL` | No | `http://localhost:11434` / `gemma2:2b` |
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | No | Sin SMTP el correo no se envía y todo queda en la plataforma |
@@ -456,7 +466,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 ## 11. Decisiones de diseño
 
 - **Monolito en capas** (`config`, `controller`, `dto`, `entity`, `enums`, `exception`, `repository`, `security`, `services`, `util`). Controladores finos; la lógica vive en los servicios.
-- **Esquema fiel al oficial.** Las ampliaciones están marcadas `[EXT]` en `01_schema.sql`:
+- **Esquema fiel al oficial.** Las ampliaciones están marcadas `[EXT]` en `database/postgresql/01_schema.sql`:
   - `usuarios`: `bloqueado_hasta`, `notificaciones_habilitadas`, `canal_preferido` (HU-002, HU-013).
   - `contenidos`: `url_recurso`, `cuerpo` (HU-006, HU-023).
   - `perfiles_aprendizaje`: `metodo_secundario`, distinto del principal.
@@ -480,7 +490,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 - **Posponer recordatorios (RF-011):** `notificaciones.pospuesta_hasta`; mientras no llegue esa fecha no se muestra.
 - **Actividades sin alternativa accesible (RF-021):** `evaluaciones.alternativa_accesible`. Si vale 0 y el estudiante tiene perfil motor, la evaluación se excluye de la calificación y se avisa al instructor.
 - **Informes de accesibilidad (RF-012):** el uso de funciones de accesibilidad se agrega por función y categoría; no se muestra la discapacidad de cada estudiante a instructores.
-- **Cifrado (RF-013):** contraseñas, OTP y tokens con hash desde la aplicación; el resto en reposo con TDE y respaldos cifrados (guion comentado al final de `01_schema.sql`); en tránsito, TLS. **Los PDF y Excel exportados (RF-006, RF-012) no llevan contraseña**: por decisión del equipo se entregan solo por TLS; los diagramas dicen «cifrado» y esto es una desviación consciente.
+- **Cifrado (RF-013):** contraseñas, OTP y tokens con hash desde la aplicación; el resto en reposo con cifrado de disco y respaldos cifrados (PostgreSQL no tiene TDE nativo; ejemplo con `pg_dump | gpg` comentado al final de `01_schema.sql`); en tránsito, TLS. **Los PDF y Excel exportados (RF-006, RF-012) no llevan contraseña**: por decisión del equipo se entregan solo por TLS; los diagramas dicen «cifrado» y esto es una desviación consciente.
 - **Alertas de seguridad (RF-013):** una operación bloqueada o un intento de inyección o XSS se audita como incidente y notifica a los administradores.
 
 - **Contenido único:** hay una sola entidad `Contenido` con el campo `formato` (VIDEO, PODCAST, SIMULACION, LECTURA); no hay subclases `Video`, `Podcast`, etc. como en el diagrama de clases, para mantener el esquema relacional oficial.
@@ -498,7 +508,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
 
 ### Estado de verificación (léelo antes de ejecutar)
 
-El backend se escribió en un entorno **sin acceso a Maven Central**, por lo que **nunca se compiló ni se ejecutó contra SQL Server**. Lo que sí se comprobó:
+El backend se escribió en un entorno **sin acceso a Maven Central**, por lo que **nunca se compiló ni se ejecutó contra PostgreSQL con la aplicación**. El esquema sí se ejecutó en un PostgreSQL 16 real (dos veces seguidas, con sus índices, restricciones y triggers) y se verificó que cada columna que mapean las entidades existe. Lo que sí se comprobó:
 
 - Sintaxis de todos los `.java` con un analizador independiente y cruce de imports entre clases del proyecto (0 errores).
 - Nombres de propiedades de las consultas JPQL y de los métodos derivados de los repositorios contra las entidades (0 hallazgos reales).
@@ -506,7 +516,7 @@ El backend se escribió en un entorno **sin acceso a Maven Central**, por lo que
 
 Del **frontend** se comprobó: `eslint` sin errores, `vite build` correcto y una prueba de humo en Chromium (Playwright) que abre las 31 pantallas de los tres roles con respuestas de API simuladas, sin errores de consola, y recorre el inicio de una evaluación. **No** se probó contra el backend real.
 
-Lo que **no** se comprobó y puede fallar al primer arranque: cableado de Spring (beans, seguridad), mapeos JPA/Hibernate contra el esquema, comportamiento de SQL Server, WebSocket, generación de PDF (OpenPDF) y Excel (POI), y las llamadas reales a Ollama. Ejecuta `./mvnw clean package` y, si hay errores de compilación o de arranque, pégalos para corregirlos. Las pruebas `PoliticaPasswordTest` y `TutorServiceTest` requieren el classpath de Spring y solo correrán con Maven.
+Lo que **no** se comprobó y puede fallar al primer arranque: cableado de Spring (beans, seguridad), mapeos JPA/Hibernate contra el esquema, comportamiento de PostgreSQL (por ejemplo, una sentencia fallida aborta toda la transacción), WebSocket, generación de PDF (OpenPDF) y Excel (POI), y las llamadas reales a Ollama. Ejecuta `./mvnw clean package` y, si hay errores de compilación o de arranque, pégalos para corregirlos. Las pruebas `PoliticaPasswordTest` y `TutorServiceTest` requieren el classpath de Spring y solo correrán con Maven.
 
 ---
 
@@ -584,8 +594,8 @@ Guarda cada imagen en `docs/img/` con el nombre indicado. Todos los prompts sigu
 
 **`docs/img/13-arquitectura.png`** · 16:9 · Sección 2.
 - **Texto alternativo:** Diagrama de arquitectura monolítica de V-Learning.
-- **Descripción:** Tres bloques: navegador (React), monolito Spring Boot con capas (seguridad, controladores, servicios, repositorios) y SQL Server; Ollama como elemento lateral conectado a los servicios.
-- **Prompt:** *"Clean architecture diagram, 16:9, white background. Left box 'Navegador · React + Vite'. Center large box 'Monolito Spring Boot' with four stacked layers (Seguridad JWT/OTP/RBAC, Controladores REST + WebSocket, Servicios, Repositorios JPA). Right a database cylinder 'SQL Server'. A small side box 'Ollama local · gemma2:2b' connected to the Servicios layer. Arrows labelled '/api' and '/ws'. Flat style, rounded boxes, purple (#5B21B6) outlines, navy (#0B1022) text, mint (#E8F5F0) accents, legible labels in Spanish, no logos."*
+- **Descripción:** Tres bloques: navegador (React), monolito Spring Boot con capas (seguridad, controladores, servicios, repositorios) y PostgreSQL; Ollama como elemento lateral conectado a los servicios.
+- **Prompt:** *"Clean architecture diagram, 16:9, white background. Left box 'Navegador · React + Vite'. Center large box 'Monolito Spring Boot' with four stacked layers (Seguridad JWT/OTP/RBAC, Controladores REST + WebSocket, Servicios, Repositorios JPA). Right a database cylinder 'PostgreSQL'. A small side box 'Ollama local · gemma2:2b' connected to the Servicios layer. Arrows labelled '/api' and '/ws'. Flat style, rounded boxes, purple (#5B21B6) outlines, navy (#0B1022) text, mint (#E8F5F0) accents, legible labels in Spanish, no logos."*
 
 **`docs/img/14-flujo-por-rol.png`** · 16:9 · Sección 8.6.
 - **Texto alternativo:** Flujo de uso del estudiante, el instructor y el administrador.
@@ -624,9 +634,9 @@ Alcance: se busca nivel AA. Una auditoría con usuarios reales y lectores de pan
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| `Login failed for user` al arrancar | Usuario SQL sin permisos o autenticación SQL deshabilitada | Habilita autenticación mixta y revisa `DB_USER` / `DB_PASSWORD`. |
-| `PKIX path building failed` o error TLS con SQL Server | Certificado autofirmado | La URL por defecto ya incluye `trustServerCertificate=true`; si usas `DB_URL` propia, agrégalo. |
-| `Invalid object name 'usuarios'` | No se ejecutó el script SQL | Ejecuta `database/01_schema.sql` en SSMS. |
+| `password authentication failed for user` | Usuario o contraseña incorrectos | Revisa `DB_USER` / `DB_PASSWORD` y que ejecutaste `00_crear_bd.sql`. |
+| `Connection refused` a la base | PostgreSQL apagado o puerto distinto | Verifica el servicio en el puerto 5432 o define `DB_URL`. |
+| `relation "usuarios" does not exist` | No se ejecutó el script SQL | Ejecuta `database/postgresql/01_schema.sql` con `psql`. |
 | Error de validación del esquema al arrancar | Entidad y tabla no coinciden | Mantén `ddl-auto=none` y compara con el script; los cambios van marcados `[EXT]`. |
 | `JWT_SECRET` ausente o corto | Variable no definida | Define una cadena aleatoria de al menos 32 caracteres. |
 | 401 tras un rato inactivo | Inactividad deslizante de 30 min | Inicia sesión de nuevo. |

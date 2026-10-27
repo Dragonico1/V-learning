@@ -30,7 +30,7 @@ public class RecursoAccesible {
     @Column(nullable = false, length = 500)
     private String url;
 
-    @Column(columnDefinition = "VARCHAR(MAX)")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(nullable = false)
