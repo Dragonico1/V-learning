@@ -64,7 +64,7 @@ export function AppShell() {
         Saltar al contenido principal
       </a>
       <Sidebar abierto={menu} onCerrar={() => setMenu(false)} />
-      <div className="md:pl-[72px] xl:pl-[246px]">
+      <div className="md:pl-[72px]">
         <div className="flex flex-col xl:flex-row">
           <div className="min-w-0 xl:flex-1">
             <Topbar

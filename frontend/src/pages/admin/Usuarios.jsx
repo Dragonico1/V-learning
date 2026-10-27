@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyRound, Plus, Search } from "lucide-react";
+import { KeyRound, LucideZap, Plus, Search } from "lucide-react";
 import { api, mensajeError, detallesError } from "../../api/client.js";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
@@ -211,6 +211,7 @@ export default function Usuarios() {
   return (
     <>
       <PageHeader
+        eyebrow="Administración"
         titulo="Usuarios"
         subtitulo="Crea cuentas, cambia su estado y reenvía credenciales."
         acciones={
@@ -274,7 +275,7 @@ export default function Usuarios() {
             {datos.total} usuario(s) encontrados.
           </p>
           <div className="overflow-x-auto rounded-card border border-line bg-surface">
-            <table className="w-full min-w-[760px] text-left">
+            <table className="w-full min-w-[1120px] text-left">
               <caption className="sr-only">Usuarios de la plataforma</caption>
               <thead className="bg-subtle text-sm">
                 <tr>
@@ -283,6 +284,12 @@ export default function Usuarios() {
                   </th>
                   <th scope="col" className="p-3">
                     Rol
+                  </th>
+                  <th scope="col" className="p-3">
+                    Código
+                  </th>
+                  <th scope="col" className="p-3">
+                    Programa / Especialidad
                   </th>
                   <th scope="col" className="p-3">
                     Estado
@@ -305,14 +312,26 @@ export default function Usuarios() {
                       <span className="text-sm">{u.correo}</span>
                     </th>
                     <td className="p-3">{ROL_TEXTO[u.rol]}</td>
-                    <td className="p-3">
-                      <Badge tono={TONO_ESTADO[u.estado]}>
-                        {ESTADO_USUARIO_TEXTO[u.estado]}
-                      </Badge>
+                    <td className="whitespace-nowrap p-3 text-sm">
+                      {u.codigo ||
+                        (u.rol === "ADMINISTRADOR"
+                          ? "No aplica"
+                          : "Sin especificar")}
                     </td>
-                    <td className="p-3 text-sm">{fmtFecha(u.ultimoAcceso)}</td>
+                    <td className="p-3 text-sm">
+                      {u.programaAcademico ||
+                        u.especialidad ||
+                        (u.rol === "ADMINISTRADOR"
+                          ? "No aplica"
+                          : "Sin especificar")}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {u.ultimoAcceso
+                        ? fmtFecha(u.ultimoAcceso)
+                        : "Aún no ha ingresado"}
+                    </td>
                     <td className="p-3">
-                      <div className="flex flex-nowrap gap-2 whitespace-nowrap text-sm">
+                      <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap [&_button]:min-h-0 [&_button]:px-2.5 [&_button]:py-1.5 [&_button]:text-xs [&_svg]:h-3.5 [&_svg]:w-3.5">
                         {u.estado === "BLOQUEADO" || u.estado === "INACTIVO" ? (
                           <Button
                             variante="secondary"
