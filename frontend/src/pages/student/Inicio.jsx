@@ -589,6 +589,7 @@ export default function EstudianteInicio() {
   const perfil = (
     <PanelPerfil
       nombre={nombre}
+      programa={usuario.programaAcademico}
       promedio={promedio}
       logros={logros}
       conCampana={Boolean(panelSlot)}

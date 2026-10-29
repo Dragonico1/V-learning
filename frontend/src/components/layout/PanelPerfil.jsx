@@ -317,6 +317,7 @@ function SeccionInsignias({ obtenidas, pendientes, listo }) {
 /**
  * Panel de perfil del estudiante.
  * - nombre: primer nombre del usuario
+ * - programa: programa académico del estudiante (opcional)
  * - promedio: avance promedio (0-100) de los cursos activos
  * - logros: respuesta de GET /logros (puntos, nivel, insignias obtenidas,
  *   pendientes[{ id, nombre, puntosRequeridos, faltan }])
@@ -331,6 +332,7 @@ function SeccionInsignias({ obtenidas, pendientes, listo }) {
  */
 export default function PanelPerfil({
   nombre,
+  programa,
   promedio,
   logros,
   actividad,
@@ -359,6 +361,12 @@ export default function PanelPerfil({
         <p className="text-lg font-bold text-strong xl:short:text-base">
           Qué bueno verte, {nombre}
         </p>
+        {programa && (
+          <p className="-mt-2 text-sm text-muted">
+            <span className="sr-only">Programa académico: </span>
+            {programa}
+          </p>
+        )}
 
         <div className="flex items-center justify-center gap-2">
           {conCampana && (

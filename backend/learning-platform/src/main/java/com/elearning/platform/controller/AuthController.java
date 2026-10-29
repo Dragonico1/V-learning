@@ -51,6 +51,13 @@ public class AuthController {
         return auth.primerAcceso(principal, req, IpUtil.de(http));
     }
 
+    /** El estudiante activa o desactiva su segundo factor; para instructor y administrador responde 403. */
+    @PutMapping("/doble-factor")
+    public PerfilActual dobleFactor(@AuthenticationPrincipal UsuarioPrincipal principal,
+                                    @Valid @RequestBody DobleFactorRequest req, HttpServletRequest http) {
+        return auth.cambiarDobleFactor(principal, req, IpUtil.de(http));
+    }
+
     @PostMapping("/logout")
     public MensajeRespuesta logout(@AuthenticationPrincipal UsuarioPrincipal principal, HttpServletRequest http) {
         auth.cerrarSesion(principal, IpUtil.de(http));

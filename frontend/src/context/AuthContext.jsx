@@ -47,6 +47,14 @@ export function AuthProvider({ children }) {
     return r.usuario;
   }, []);
 
+  /** Estudiante sin doble factor: el login ya devuelve la sesión, no hay código que verificar. */
+  const iniciarSesion = useCallback((sesion) => {
+    token.set(sesion.token);
+    setAvisoSesion(null);
+    setUsuario(sesion.usuario);
+    return sesion.usuario;
+  }, []);
+
   const cerrarSesion = useCallback(async () => {
     try { await api.auth.logout(); } catch { /* la sesión puede haber vencido */ }
     token.clear();
@@ -54,8 +62,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const valor = useMemo(() => ({
-    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, verificarOtp, cerrarSesion, setUsuario,
-  }), [usuario, cargando, avisoSesion, refrescar, verificarOtp, cerrarSesion]);
+    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, verificarOtp, iniciarSesion, cerrarSesion, setUsuario,
+  }), [usuario, cargando, avisoSesion, refrescar, verificarOtp, iniciarSesion, cerrarSesion]);
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }

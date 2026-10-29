@@ -56,6 +56,20 @@ public abstract class Usuario {
     @Column(name = "canal_preferido", nullable = false, length = 50)
     private CanalNotificacion canalPreferido = CanalNotificacion.PLATAFORMA;
 
+    /** Preferencia de segundo factor. Solo tiene efecto en estudiantes; el resto siempre lo usa. */
+    @Column(name = "doble_factor_habilitado", nullable = false)
+    private boolean dobleFactorHabilitado = true;
+
+    /** El segundo factor es obligatorio para instructores y administradores. */
+    public boolean dobleFactorObligatorio() {
+        return rol != null && rol != RolUsuario.ESTUDIANTE;
+    }
+
+    /** true si al iniciar sesión se debe pedir el código OTP. */
+    public boolean requiereDobleFactor() {
+        return dobleFactorObligatorio() || dobleFactorHabilitado;
+    }
+
     @PrePersist
     void antesDeGuardar() {
         if (fechaCreacion == null) fechaCreacion = LocalDateTime.now();

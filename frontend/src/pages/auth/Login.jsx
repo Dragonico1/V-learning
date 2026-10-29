@@ -12,9 +12,9 @@ import {
   TextField,
 } from "../../components/ui/index.jsx";
 
-/** RF-002: credenciales → código OTP → sesión. Redirige según rol y lo que falte por completar. */
+/** RF-002: credenciales → código OTP (omitido si el estudiante lo desactivó) → sesión. Redirige según rol y lo que falte por completar. */
 export default function Login() {
-  const { usuario, verificarOtp, avisoSesion } = useAuth();
+  const { usuario, verificarOtp, iniciarSesion, avisoSesion } = useAuth();
   const navigate = useNavigate();
   const [paso, setPaso] = useState(1);
   const [correo, setCorreo] = useState("");
@@ -33,6 +33,12 @@ export default function Login() {
     setCargando(true);
     try {
       const r = await api.auth.login(correo.trim(), password);
+      if (r.sesion) {
+        // Estudiante con la verificación en dos pasos desactivada: entra sin código.
+        const u = iniciarSesion(r.sesion);
+        navigate(destinoInicial(u), { replace: true });
+        return;
+      }
       setOtpDev(r.codigoOtp ?? null);
       setInfo(r.mensaje);
       setPaso(2);

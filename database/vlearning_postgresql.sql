@@ -52,6 +52,9 @@ CREATE TABLE usuarios (
     notificaciones_habilitadas BOOLEAN NOT NULL DEFAULT TRUE,
     -- [EXT] HU-013 / CU-011: canal preferido (plataforma, correo).
     canal_preferido VARCHAR(15) NOT NULL DEFAULT 'PLATAFORMA',
+    -- [EXT] Segundo factor (OTP): obligatorio para INSTRUCTOR y ADMINISTRADOR (la aplicación lo
+    --       fuerza por rol); el ESTUDIANTE puede desactivarlo desde Configuración.
+    doble_factor_habilitado BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT uq_usuarios_correo UNIQUE (correo_institucional),
     CONSTRAINT ck_usuarios_intentos CHECK (intentos_fallidos >= 0),
     CONSTRAINT ck_usuarios_rol CHECK (rol IN ('ESTUDIANTE', 'INSTRUCTOR', 'ADMINISTRADOR')),

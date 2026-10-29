@@ -2,11 +2,13 @@ package com.elearning.platform.services;
 
 import com.elearning.platform.config.VlearningProperties;
 import com.elearning.platform.dto.AuthDtos.*;
+import com.elearning.platform.entity.Estudiante;
 import com.elearning.platform.entity.Usuario;
 import com.elearning.platform.enums.EstadoUsuario;
 import com.elearning.platform.enums.ResultadoAuditoria;
 import com.elearning.platform.enums.RolUsuario;
 import com.elearning.platform.exception.ApiException;
+import com.elearning.platform.repository.EstudianteRepository;
 import com.elearning.platform.repository.PerfilAccesibilidadRepository;
 import com.elearning.platform.repository.PerfilAprendizajeRepository;
 import com.elearning.platform.repository.RegistroAuditoriaRepository;
@@ -23,7 +25,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * RF-002 Autenticar: correo + contraseña → OTP → JWT. Los fallos se auditan y cuentan en una
+ * RF-002 Autenticar: correo + contraseña → OTP (obligatorio para instructor/administrador, opcional
+ * para estudiante) → JWT. Los fallos se auditan y cuentan en una
  * ventana; al superar el máximo se bloquea temporalmente y se avisa por correo.
  * noRollbackFor: los contadores de intentos deben guardarse aunque la operación responda con error.
  */
@@ -44,6 +47,7 @@ public class AuthService {
     private final NotificacionService notificaciones;
     private final PerfilAprendizajeRepository perfilesAprendizaje;
     private final PerfilAccesibilidadRepository perfilesAccesibilidad;
+    private final EstudianteRepository estudiantes;
     private final VlearningProperties props;
     private final String hashFalso;
 
@@ -51,7 +55,8 @@ public class AuthService {
                        MailService correo, SesionService sesiones, AuditoriaService auditoria,
                        RegistroAuditoriaRepository registros, NotificacionService notificaciones,
                        PerfilAprendizajeRepository perfilesAprendizaje,
-                       PerfilAccesibilidadRepository perfilesAccesibilidad, VlearningProperties props) {
+                       PerfilAccesibilidadRepository perfilesAccesibilidad,
+                       EstudianteRepository estudiantes, VlearningProperties props) {
         this.usuarios = usuarios;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
@@ -62,6 +67,7 @@ public class AuthService {
         this.notificaciones = notificaciones;
         this.perfilesAprendizaje = perfilesAprendizaje;
         this.perfilesAccesibilidad = perfilesAccesibilidad;
+        this.estudiantes = estudiantes;
         this.props = props;
         // Para gastar el mismo tiempo cuando el correo no existe (evita enumerar cuentas).
         this.hashFalso = passwordEncoder.encode(UUID.randomUUID().toString());
@@ -93,6 +99,12 @@ public class AuthService {
             throw credencialesInvalidas();
         }
 
+        // El segundo factor es obligatorio para instructor y administrador; el estudiante puede desactivarlo.
+        if (!u.requiereDobleFactor()) {
+            return new LoginRespuesta("SESION_INICIADA", "Sesión iniciada.", null,
+                    abrirSesion(u, correoNormalizado, ip));
+        }
+
         String codigo = otpService.generar(u, ip);
         String cuerpo = "Tu código de verificación de V-Learning es " + codigo + ". Vence en "
                 + props.otp().minutosValidez() + " minutos. Si no fuiste tú, ignora este mensaje.";
@@ -106,7 +118,7 @@ public class AuthService {
         auditoria.registrar(u.getId(), "LOGIN_CREDENCIALES_OK", correoNormalizado, ResultadoAuditoria.PERMITIDO, ip);
         return new LoginRespuesta("OTP_REQUERIDO",
                 "Enviamos un código de 6 números a tu correo. Vence en " + props.otp().minutosValidez() + " minutos.",
-                exponer ? codigo : null);
+                exponer ? codigo : null, null);
     }
 
     @Transactional(noRollbackFor = ApiException.class)
@@ -132,12 +144,45 @@ public class AuthService {
             throw otpInvalido();
         }
 
+        return abrirSesion(u, correoNormalizado, ip);
+    }
+
+    /** Cierra el flujo de autenticación: reinicia contadores, emite el JWT y audita. */
+    private SesionRespuesta abrirSesion(Usuario u, String correoNormalizado, String ip) {
         u.reiniciarIntentosFallidos();
         u.setUltimoAcceso(LocalDateTime.now());
         usuarios.save(u);
         SesionService.TokenEmitido emitido = sesiones.iniciar(u, ip);
         auditoria.registrar(u.getId(), "LOGIN_OK", correoNormalizado, ResultadoAuditoria.PERMITIDO, ip);
         return new SesionRespuesta(emitido.token(), "Bearer", emitido.expiraPorInactividad(), perfilActual(u));
+    }
+
+    /**
+     * Activa o desactiva el segundo factor. Solo estudiantes: para instructor y administrador es
+     * obligatorio. Desactivarlo exige confirmar la contraseña actual.
+     */
+    @Transactional(noRollbackFor = ApiException.class)
+    public PerfilActual cambiarDobleFactor(UsuarioPrincipal principal, DobleFactorRequest req, String ip) {
+        Usuario u = usuarios.findById(principal.id())
+                .orElseThrow(() -> ApiException.noAutenticado("NO_AUTENTICADO", "Tu sesión no es válida."));
+        if (u.dobleFactorObligatorio()) {
+            throw ApiException.prohibido("DOBLE_FACTOR_OBLIGATORIO",
+                    "La verificación en dos pasos es obligatoria para tu rol.");
+        }
+        boolean habilitar = Boolean.TRUE.equals(req.habilitado());
+        if (!habilitar) {
+            if (req.password() == null || !passwordEncoder.matches(req.password(), u.getPasswordHash())) {
+                auditoria.registrar(u.getId(), "DOBLE_FACTOR_DESACTIVAR_FALLIDO", "contraseña incorrecta",
+                        ResultadoAuditoria.DENEGADO, ip);
+                throw ApiException.solicitudInvalida("PASSWORD_ACTUAL_INCORRECTA",
+                        "Escribe tu contraseña actual para desactivar la verificación en dos pasos.");
+            }
+        }
+        u.setDobleFactorHabilitado(habilitar);
+        usuarios.save(u);
+        auditoria.registrar(u.getId(), habilitar ? "DOBLE_FACTOR_ACTIVADO" : "DOBLE_FACTOR_DESACTIVADO",
+                "usuarios/" + u.getId(), ResultadoAuditoria.PERMITIDO, ip);
+        return perfilActual(u);
     }
 
     @Transactional(readOnly = true)
@@ -181,13 +226,16 @@ public class AuthService {
     private PerfilActual perfilActual(Usuario u) {
         Boolean vark = null;
         Boolean accesibilidad = null;
+        String programa = null;
         if (u.getRol() == RolUsuario.ESTUDIANTE) {
+            programa = estudiantes.findById(u.getId()).map(Estudiante::getProgramaAcademico).orElse(null);
             vark = perfilesAprendizaje.findByEstudianteId(u.getId())
                     .map(p -> p.getEstiloPredominante() != null).orElse(false);
             accesibilidad = perfilesAccesibilidad.findByEstudianteId(u.getId()).isPresent();
         }
         return new PerfilActual(u.getId(), u.getNombre(), u.getCorreoInstitucional(), u.getRol(),
-                u.getEstado().name(), u.getEstado() == EstadoUsuario.PENDIENTE_PRIMER_ACCESO, vark, accesibilidad);
+                u.getEstado().name(), u.getEstado() == EstadoUsuario.PENDIENTE_PRIMER_ACCESO, vark, accesibilidad,
+                programa, u.requiereDobleFactor(), u.dobleFactorObligatorio());
     }
 
     private void registrarFallo(Usuario u, String ip) {
