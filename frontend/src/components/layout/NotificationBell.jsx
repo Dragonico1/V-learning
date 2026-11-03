@@ -1,19 +1,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Bell, Check, Clock } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useNotif } from "../../context/NotifContext.jsx";
-import { etiquetaDestino, fmtFecha } from "../../utils/format.js";
-import { mensajeError } from "../../api/client.js";
-
-const OPCIONES = [
-  ["1_DIA", "1 día"],
-  ["3_DIAS", "3 días"],
-  ["1_SEMANA", "1 semana"],
-];
+import { fmtFecha } from "../../utils/format.js";
 
 /** Campana con punto rojo y centro de notificaciones (RF-011). */
 export function NotificationBell({ redonda = false }) {
-  const { lista, noLeidas, marcarLeida, posponer, avisar } = useNotif();
+  const { lista, noLeidas } = useNotif();
   const [abierta, setAbierta] = useState(false);
   const caja = useRef(null);
   const idPanel = useId();
@@ -34,15 +27,6 @@ export function NotificationBell({ redonda = false }) {
     };
   }, [abierta]);
 
-  const accion = async (fn, ok) => {
-    try {
-      await fn();
-      if (ok) avisar(ok, "ok");
-    } catch (e) {
-      avisar(mensajeError(e), "error");
-    }
-  };
-
   return (
     <div ref={caja} className="relative">
       <button
@@ -55,7 +39,7 @@ export function NotificationBell({ redonda = false }) {
             ? `Notificaciones: ${noLeidas} sin leer`
             : "Notificaciones"
         }
-        className={`relative flex items-center justify-center ${redonda ? "h-10 w-10 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200" : "h-11 w-11 rounded-xl bg-subtle text-strong hover:bg-primary-100"}`}
+        className={`relative flex items-center justify-center ${redonda ? "h-11 w-11 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200" : "h-11 w-11 rounded-xl bg-subtle text-strong hover:bg-primary-100"}`}
       >
         <Bell size={20} aria-hidden="true" />
         {noLeidas > 0 && (
@@ -109,57 +93,6 @@ export function NotificationBell({ redonda = false }) {
                         {fmtFecha(n.fechaCreacion)}
                       </p>
                     </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 pl-4">
-                    {n.enlace && (
-                      <Link
-                        to={n.enlace}
-                        onClick={() => {
-                          setAbierta(false);
-                          if (!n.leida) accion(() => marcarLeida(n.id));
-                        }}
-                        className="flex min-h-9 items-center gap-1 rounded-lg bg-primary-600 px-3 text-sm font-bold text-white hover:bg-primary-700"
-                      >
-                        {etiquetaDestino(n.enlace)}
-                        <ArrowRight size={15} aria-hidden="true" />
-                        <span className="sr-only">: {n.titulo}</span>
-                      </Link>
-                    )}
-                    {!n.leida && (
-                      <button
-                        type="button"
-                        onClick={() => accion(() => marcarLeida(n.id))}
-                        className="flex min-h-9 items-center gap-1 rounded-lg border border-line px-2.5 text-sm font-bold text-strong hover:bg-subtle"
-                      >
-                        <Check size={15} aria-hidden="true" />
-                        Marcar como leída
-                      </button>
-                    )}
-                    <label className="flex items-center gap-1 text-sm font-bold text-strong">
-                      <Clock size={15} aria-hidden="true" />
-                      <span className="sr-only">Posponer</span>
-                      <select
-                        aria-label={`Posponer «${n.titulo}»`}
-                        defaultValue=""
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          e.target.value = "";
-                          if (v)
-                            accion(
-                              () => posponer(n.id, v),
-                              "Recordatorio pospuesto.",
-                            );
-                        }}
-                        className="min-h-9 rounded-lg border border-line bg-surface px-2 text-sm"
-                      >
-                        <option value="">Posponer…</option>
-                        {OPCIONES.map(([v, t]) => (
-                          <option key={v} value={v}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
                   </div>
                 </li>
               ))}

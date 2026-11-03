@@ -76,9 +76,11 @@ public class RankingService {
         int puntosEvaluacion = gamificacion.puntosDe(EventosGamificacion.EVALUACION_COMPLETADA);
 
         Map<Long, Integer> puntos = new HashMap<>();
+        Map<Long, Estudiante> porId = new HashMap<>();
         for (Inscripcion i : inscripciones.findByCursoIdAndEstadoIn(cursoId,
                 List.of(EstadoInscripcion.ACTIVA, EstadoInscripcion.FINALIZADA))) {
             puntos.put(i.getEstudiante().getId(), 0);
+            porId.put(i.getEstudiante().getId(), i.getEstudiante());
         }
         for (Object[] fila : progresos.completadosPorEstudiante(cursoId)) {
             puntos.computeIfPresent((Long) fila[0], (k, v) -> v + ((Long) fila[1]).intValue() * puntosContenido);
@@ -113,6 +115,7 @@ public class RankingService {
             PosicionRanking p = new PosicionRanking();
             p.setRankingId(r.getId());
             p.setEstudianteId(e.getKey());
+            p.setEstudiante(porId.get(e.getKey()));
             p.setPosicion(pos++);
             p.setPuntos(e.getValue());
             posiciones.save(p);

@@ -79,7 +79,7 @@ export function AppShell() {
                 tabIndex={-1}
                 className="min-w-0 flex-1 px-4 py-6 outline-none! shadow-none! rounded-none! md:px-8 md:py-8"
               >
-                <div className="mx-auto max-w-[1180px]">
+                <div className="max-w-[1180px]">
                   <Outlet context={{ panelSlot }} />
                 </div>
               </main>

@@ -11,15 +11,13 @@ import {
   ChevronUp,
   ClipboardCheck,
   FileText,
-  MoreVertical,
-  Sparkles,
+  Sparkle,
 } from "lucide-react";
 import { api } from "../../api/client.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { fmtNumero } from "../../utils/format.js";
 import {
-  Badge,
   Button,
   Cargando,
   EstadoError,
@@ -30,8 +28,11 @@ import PanelPerfil from "../../components/layout/PanelPerfil.jsx";
 
 const PANEL = "rounded-card border border-line bg-surface";
 const BOTON_FLECHA =
-  "flex h-9 w-9 items-center justify-center rounded-full bg-surface text-primary-700 hover:bg-primary-100";
+  "flex h-10 w-10 items-center justify-center rounded-full bg-surface text-primary-700 hover:bg-primary-100";
 const LIMITE_LISTA = 3;
+
+/* Los títulos llevan "!" en el tamaño porque index.css fija h1–h4 sin capa
+   y ganaría sobre las utilidades de Tailwind. */
 
 /** Tema de la ilustración según las palabras del título del curso. */
 function temaCurso(titulo = "") {
@@ -54,6 +55,7 @@ function Ilustracion({ tema }) {
     className: base,
     "aria-hidden": "true",
   };
+
   if (tema === "java") {
     return (
       <svg {...props}>
@@ -96,6 +98,7 @@ function Ilustracion({ tema }) {
       </svg>
     );
   }
+
   if (tema === "codigo") {
     return (
       <svg {...props}>
@@ -154,6 +157,7 @@ function Ilustracion({ tema }) {
       </svg>
     );
   }
+
   if (tema === "datos") {
     return (
       <svg {...props}>
@@ -171,6 +175,7 @@ function Ilustracion({ tema }) {
       </svg>
     );
   }
+
   if (tema === "web") {
     return (
       <svg {...props}>
@@ -235,6 +240,7 @@ function Ilustracion({ tema }) {
       </svg>
     );
   }
+
   return null;
 }
 
@@ -245,16 +251,12 @@ const IMAGEN_POR_TEMA = {
     "https://images.presentationgo.com/2025/04/software-developer-coding-laptop.jpg",
 };
 
-/**
- * Imagen de la tarjeta de curso.
- * 1) `curso.imagen` si el backend envía una URL; si no, la foto del tema (IMAGEN_POR_TEMA).
- * 2) Si no hay foto o no carga, una ilustración según el tema (java, programación, datos, web).
- * 3) Si tampoco hay tema, el degradado con el ícono del libro.
- */
-function ImagenCurso({ curso }) {
+/** Imagen de la tarjeta de curso, con la etiqueta de avance encima. */
+function ImagenCurso({ curso, etiqueta }) {
   const [fallo, setFallo] = useState(false);
   const tema = temaCurso(curso.titulo);
   const src = curso.imagen || IMAGEN_POR_TEMA[tema];
+
   return (
     <div className="relative mb-3 flex h-24 items-center justify-center overflow-hidden rounded-opt bg-gradient-to-br from-primary-700 to-primary-300 text-white">
       {src && !fallo ? (
@@ -271,6 +273,9 @@ function ImagenCurso({ curso }) {
       ) : (
         <BookOpen size={36} strokeWidth={1.6} aria-hidden="true" />
       )}
+      <span className="absolute left-2 top-2 z-10 rounded-full bg-white/95 px-2.5 py-0.5 text-sm font-extrabold uppercase tracking-wide text-primary-700">
+        {etiqueta}
+      </span>
     </div>
   );
 }
@@ -278,6 +283,7 @@ function ImagenCurso({ curso }) {
 function BotonVerMas({ total, abierto, onAlternar, controla, className = "" }) {
   if (total <= LIMITE_LISTA) return null;
   const Icono = abierto ? ChevronUp : ChevronDown;
+
   return (
     <div className={`text-center ${className}`}>
       <button
@@ -308,7 +314,7 @@ function textoPendiente(p) {
 
 const ICONO_PENDIENTE = { EVALUACION: ClipboardCheck, TAREA: FileText };
 
-/** Fila de lista: ícono, título, línea de detalle y flecha. La usan Pendientes y Para reforzar. */
+/** Fila de lista: ícono, título, línea de detalle y flecha. */
 function FilaLista({ to, Icono, titulo, meta }) {
   return (
     <li className="list-none">
@@ -319,9 +325,11 @@ function FilaLista({ to, Icono, titulo, meta }) {
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
           <Icono size={18} aria-hidden="true" />
         </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="block truncate font-bold text-strong">{titulo}</span>
-          <span className="block truncate text-xs text-muted">{meta}</span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="block truncate text-base font-bold text-strong">
+            {titulo}
+          </span>
+          <span className="block truncate text-sm text-muted">{meta}</span>
         </span>
         <ChevronRight
           size={16}
@@ -333,7 +341,7 @@ function FilaLista({ to, Icono, titulo, meta }) {
   );
 }
 
-/** Sección con título, contador, filas y "Ver más". Mismo estilo para todas las listas. */
+/** Sección con título, filas y "Ver más". */
 function SeccionLista({
   id,
   titulo,
@@ -345,15 +353,18 @@ function SeccionLista({
   children,
 }) {
   return (
-    <section aria-labelledby={id} className="grid gap-5">
-      <h2 id={id} className="text-xl">
+    <section
+      aria-labelledby={id}
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3"
+    >
+      <h2 id={id} className="text-xl!">
         {titulo}
       </h2>
       <div className={`${PANEL} p-4`}>
         {total === 0 ? (
           <p>{vacio}</p>
         ) : (
-          <ul id={listaId} className="grid gap-2">
+          <ul id={listaId} className="grid grid-cols-[minmax(0,1fr)] gap-2">
             {children}
           </ul>
         )}
@@ -375,27 +386,31 @@ export default function EstudianteInicio() {
   const carrusel = useRef(null);
   const [verTodosPend, setVerTodosPend] = useState(false);
   const [verTodosRef, setVerTodosRef] = useState(false);
+
   const {
     datos: d,
     cargando,
     error,
     recargar,
   } = useAsync(() => api.progreso.dashboard(), []);
-  // Si /logros falla, el panel simplemente no dibuja el bloque Logros.
-  const { datos: logros } = useAsync(() => api.logros.ver(), []);
+
   if (cargando && !d) return <Cargando texto="Preparando tu inicio…" />;
   if (error && !d)
     return <EstadoError mensaje={error} onReintentar={recargar} />;
+
   const nombre = (usuario.nombre ?? "").split(" ")[0];
   const enCurso = d.cursos.filter((c) => c.estado === "ACTIVA");
   const promedio = enCurso.length
     ? enCurso.reduce((a, c) => a + Number(c.porcentaje), 0) / enCurso.length
     : 0;
+
   const desplazar = (dir) =>
-    carrusel.current?.scrollBy({ left: dir * 280, behavior: "smooth" });
+    carrusel.current?.scrollBy({ left: dir * 304, behavior: "smooth" });
+
   const pendientesVisibles = verTodosPend
     ? d.pendientes
     : d.pendientes.slice(0, LIMITE_LISTA);
+
   const sugerenciasVisibles = verTodosRef
     ? d.sugerencias
     : d.sugerencias.slice(0, LIMITE_LISTA);
@@ -447,80 +462,104 @@ export default function EstudianteInicio() {
     <div className="min-w-0">
       <section
         aria-labelledby="hero"
-        className="relative mb-6 flex flex-col gap-4 overflow-hidden rounded-card bg-primary-600 px-5 py-7 text-white sm:px-10 sm:flex-row sm:items-center sm:justify-between sm:gap-8"
+        className="relative mb-5 flex min-h-[196px] items-center overflow-hidden rounded-card bg-[linear-gradient(120deg,var(--color-primary-700),var(--color-primary-600)_55%,#7c3aed)] px-12 py-[30px] text-white max-sm:min-h-[180px] max-sm:px-[22px] max-sm:py-[26px]"
       >
-        <Sparkles
-          size={120}
-          strokeWidth={1.2}
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-6 -top-10 text-white/10"
-        />
-        <div className="relative flex min-w-0 flex-1 flex-col gap-3">
+          className="pointer-events-none absolute inset-0"
+        >
+          <span className="absolute -right-20 -top-[120px] size-[300px] rounded-full bg-white/[.07]" />
+          <span className="absolute -bottom-[130px] right-[170px] size-[230px] rounded-full bg-white/5" />
+          <Sparkle
+            size={150}
+            strokeWidth={1}
+            className="absolute right-14 top-1/2 -translate-y-1/2 text-white/[.16] max-sm:-right-8 max-sm:opacity-60"
+          />
+          <Sparkle
+            size={48}
+            strokeWidth={1.2}
+            className="absolute right-[230px] top-[26px] text-white/[.12] max-sm:hidden"
+          />
+        </div>
+
+        <div className="relative flex max-w-[640px] flex-col items-start gap-2.5">
           <h2
             id="hero"
-            className="text-lg font-extrabold leading-snug text-white!"
+            className="text-[clamp(1.375rem,2.1vw,1.75rem)]! font-extrabold! leading-[1.2]! text-white!"
           >
             Afina tus habilidades con cursos profesionales
           </h2>
-          <p className="text-sm text-primary-100!">
+          <p className="max-w-[46ch] text-base text-primary-100!">
             Retoma tus cursos o empieza uno nuevo, a tu ritmo.
           </p>
+          <Link
+            to="/cursos"
+            className="mt-1.5 inline-flex min-h-[46px] items-center gap-2.5 rounded-full bg-sidebar py-1 pl-5 pr-1.5 text-base font-bold text-white hover:bg-sidebar-surface"
+          >
+            Explorar cursos
+            <span className="flex size-[34px] items-center justify-center rounded-full bg-white text-sidebar">
+              <ArrowRight size={18} aria-hidden="true" />
+            </span>
+          </Link>
         </div>
-        <Link
-          to="/cursos"
-          className="relative inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-full bg-sidebar py-1 pl-4 pr-1.5 text-sm font-bold text-white hover:bg-sidebar-surface sm:self-auto"
-        >
-          Explorar cursos
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sidebar">
-            <ArrowRight size={16} aria-hidden="true" />
-          </span>
-        </Link>
       </section>
 
-      <ul className="mb-6 grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+      <ul
+        aria-label="Tu progreso"
+        className="mb-8 grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(190px,1fr))]"
+      >
         {[
           [
             CheckCircle2,
             "Contenidos",
             d.totales.contenidosCompletados,
             "/cursos",
+            "bg-primary-100 text-primary-700",
           ],
-          [FileText, "Tareas", d.totales.tareasCalificadas, "/progreso"],
+          [
+            FileText,
+            "Tareas",
+            d.totales.tareasCalificadas,
+            "/progreso",
+            "bg-primary-100 text-primary-700",
+          ],
           [
             ClipboardCheck,
             "Evaluaciones",
             d.totales.evaluacionesRealizadas,
             "/evaluaciones",
+            "bg-primary-100 text-primary-700",
           ],
-        ].map(([Icono, etiqueta, valor, ruta]) => (
-          <li
-            key={etiqueta}
-            className={`${PANEL} flex list-none items-center gap-3 p-4`}
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
-              <Icono size={18} aria-hidden="true" />
-            </span>
-            <dl className="grid min-w-0 flex-1 gap-1">
-              <dt className="text-xs text-muted">{etiqueta}</dt>
-              <dd className="text-lg font-extrabold text-strong">
-                {fmtNumero(valor ?? 0)}
-              </dd>
-            </dl>
+        ].map(([Icono, etiqueta, valor, ruta, tono]) => (
+          <li key={etiqueta} className="flex list-none">
             <Link
               to={ruta}
-              aria-label={`Ver ${etiqueta.toLowerCase()}`}
-              title={`Ver ${etiqueta.toLowerCase()}`}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-primary-100 hover:text-primary-700"
+              className={`${PANEL} group flex flex-1 items-center gap-3 rounded-xl px-4 py-2.5 transition-shadow hover:border-primary-300 hover:shadow-md`}
             >
-              <MoreVertical size={18} aria-hidden="true" />
+              <span
+                className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${tono}`}
+              >
+                <Icono size={20} aria-hidden="true" />
+              </span>
+              <dl className="grid min-w-0 flex-1 gap-0.5">
+                <dt className="text-sm text-muted">{etiqueta}</dt>
+                <dd className="text-[1.375rem] leading-tight font-extrabold text-strong [font-family:var(--heading-font)]">
+                  {fmtNumero(valor ?? 0)}
+                </dd>
+              </dl>
+              <ChevronRight
+                size={16}
+                aria-hidden="true"
+                className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary-600"
+              />
             </Link>
           </li>
         ))}
       </ul>
 
-      <section aria-labelledby="seguir" className="mb-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 id="seguir" className="text-xl">
+      <section aria-labelledby="seguir" className="mb-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 id="seguir" className="text-xl!">
             Continúa aprendiendo
           </h2>
           {enCurso.length > 1 && (
@@ -544,6 +583,7 @@ export default function EstudianteInicio() {
             </div>
           )}
         </div>
+
         {enCurso.length === 0 ? (
           <Vacio titulo="No estás inscrito en ningún curso">
             <Button to="/cursos" icono={ArrowRight}>
@@ -551,17 +591,20 @@ export default function EstudianteInicio() {
             </Button>
           </Vacio>
         ) : (
-          <ul ref={carrusel} className="flex snap-x gap-4 overflow-x-auto pb-1">
+          <ul
+            ref={carrusel}
+            className="-m-0.5 flex snap-x gap-4 overflow-x-auto p-0.5 pb-2"
+          >
             {enCurso.map((c) => (
               <li
                 key={c.cursoId}
-                className={`${PANEL} relative w-[260px] shrink-0 snap-start list-none p-3 transition-shadow hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-600`}
+                className={`${PANEL} relative w-72 shrink-0 snap-start list-none p-3.5 transition-shadow hover:shadow-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary-600`}
               >
-                <ImagenCurso curso={c} />
-                <Badge tono="primario" className="mb-3 border-transparent">
-                  {c.modulosCompletos} de {c.modulosTotales} módulos
-                </Badge>
-                <h3 className="mb-3 line-clamp-2 min-h-[2.6em] text-base">
+                <ImagenCurso
+                  curso={c}
+                  etiqueta={`${c.modulosCompletos} de ${c.modulosTotales} módulos`}
+                />
+                <h3 className="mb-3 line-clamp-2 min-h-[2.6em] text-lg!">
                   <Link
                     to={`/cursos/${c.cursoId}`}
                     className="text-inherit no-underline after:absolute after:inset-0 hover:underline"
@@ -579,7 +622,7 @@ export default function EstudianteInicio() {
         )}
       </section>
 
-      <div className="grid gap-6">
+      <div className="grid gap-5 sm:grid-cols-[repeat(auto-fit,minmax(min(340px,100%),1fr))]">
         {reforzar}
         {pendientes}
       </div>
@@ -590,39 +633,8 @@ export default function EstudianteInicio() {
     <PanelPerfil
       nombre={nombre}
       promedio={promedio}
-      logros={logros}
       conCampana={Boolean(panelSlot)}
     />
-  );
-
-  const cursos = enCurso.length > 0 && (
-    <section aria-labelledby="mis-cursos" className="grid gap-4">
-      <h2 id="mis-cursos" className="text-base">
-        Tus cursos
-      </h2>
-      <ul className="grid gap-2">
-        {enCurso.slice(0, 5).map((c) => (
-          <li key={c.cursoId} className="list-none">
-            <Link
-              to={`/cursos/${c.cursoId}`}
-              className="flex items-center gap-3 rounded-opt bg-subtle p-3 hover:bg-primary-100"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
-                <BookOpen size={18} aria-hidden="true" />
-              </span>
-              <span className="flex min-w-0 flex-col gap-1">
-                <span className="block text-xs text-muted">
-                  {c.modulosCompletos}/{c.modulosTotales} módulos
-                </span>
-                <span className="block truncate font-bold text-strong">
-                  {c.titulo}
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 
   return (

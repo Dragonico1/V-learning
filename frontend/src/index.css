@@ -3,6 +3,15 @@
 /* Variante para pantallas de poca altura (se usa como xl:short:...). */
 @custom-variant short (@media (max-height: 820px));
 
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* ------------------------------------------------------------------
    V-Learning · tokens de diseño (sección 4 de la especificación)
    WCAG 2.1 AA: texto normal 4.5:1, texto grande y componentes 3:1.
@@ -96,7 +105,6 @@ h2,
 h3,
 h4 {
   color: var(--color-strong);
-  margin: 0;
 }
 h1 {
   font-weight: 800;
@@ -151,6 +159,11 @@ html[data-contrast="high"] .vl-opt {
   outline-offset: 2px;
   box-shadow: 0 0 0 5px var(--color-primary-300);
   border-radius: 0.5rem;
+}
+h1[tabindex="-1"]:focus-visible,
+h2[tabindex="-1"]:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .on-dark :focus-visible {
   outline-color: #ffffff;
@@ -241,4 +254,35 @@ html[data-targets="large"] [role="switch"] {
 }
 html[data-targets="large"] .vl-nav-item {
   min-height: 3.5rem;
+}
+
+/* Sombras de scroll del menú lateral: aparecen arriba o abajo solo cuando hay
+   ítems fuera de la vista y desaparecen al llegar al borde. */
+.vl-scroll-hint {
+  background:
+    linear-gradient(var(--color-sidebar) 30%, transparent) top / 100% 40px
+      no-repeat local,
+    linear-gradient(transparent, var(--color-sidebar) 70%) bottom / 100% 40px
+      no-repeat local,
+    radial-gradient(
+        farthest-side at 50% 0,
+        rgb(255 255 255 / 0.28),
+        transparent
+      )
+      top / 100% 14px no-repeat scroll,
+    radial-gradient(
+        farthest-side at 50% 100%,
+        rgb(255 255 255 / 0.28),
+        transparent
+      )
+      bottom / 100% 14px no-repeat scroll;
+}
+
+/* Menú lateral en ventanas bajas con "objetivos grandes": los ítems miden 48 px
+   fijos (antes 3.5rem, que crece con el tamaño de letra y no deja caber el menú).
+   Con el menú recogido solo se ven íconos, así que no necesitan escalar con el texto. */
+@media (max-height: 820px) {
+  html[data-targets="large"] .vl-nav-item {
+    min-height: 48px;
+  }
 }

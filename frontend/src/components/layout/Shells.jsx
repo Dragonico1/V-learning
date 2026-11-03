@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { HelpCircle, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cx } from "../../utils/cx.js";
 import logoCompleto from "../../assets/LogoVLearning-fondo-claro.svg";
 import logoSolo from "../../assets/LogoVLearning-solo.svg";
 
 /** Plantilla A: autenticación (fondo claro con círculos decorativos y tarjeta centrada). */
-export function AuthShell({ children, ancho = "max-w-[650px]", ayuda = true }) {
+export function AuthShell({ children, ancho = "max-w-[650px]" }) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-page">
       <span
@@ -24,15 +24,6 @@ export function AuthShell({ children, ancho = "max-w-[650px]", ayuda = true }) {
         >
           <img src={logoCompleto} alt="" className="h-9 w-auto" />
         </Link>
-        {ayuda && (
-          <a
-            href="mailto:soporte@tdea.edu.co?subject=Ayuda%20de%20acceso%20V-Learning"
-            className="flex min-h-11 items-center gap-2 rounded-lg px-3 font-bold text-primary-600 underline"
-          >
-            <HelpCircle size={18} aria-hidden="true" />
-            Ayuda de acceso
-          </a>
-        )}
       </header>
       <main
         id="contenido"

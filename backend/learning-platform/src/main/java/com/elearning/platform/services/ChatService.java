@@ -130,11 +130,14 @@ public class ChatService {
         auditoria.registrar(u.id(), "MENSAJE_REPORTADO", "mensajes/" + mensajeId, ResultadoAuditoria.PERMITIDO, ip);
     }
 
-    /** Mensajes reportados pendientes en los cursos del instructor (sección «Mensajes reportados»). */
+    /** Mensajes reportados pendientes: los cursos del instructor, o todos los cursos si es administrador. */
     @Transactional(readOnly = true)
     public List<MensajeReportado> reportados(UsuarioPrincipal u) {
-        if (u.rol() != RolUsuario.INSTRUCTOR) throw ApiException.prohibido("ACCESO_DENEGADO", "Solo el instructor revisa los reportes de sus cursos.");
-        return mensajes.reportadosDelInstructor(u.id(), EstadoMensaje.REPORTADO).stream().map(m -> new MensajeReportado(
+        if (u.rol() == RolUsuario.ESTUDIANTE) throw ApiException.prohibido("ACCESO_DENEGADO", "Solo el instructor o el administrador revisan los reportes.");
+        List<Mensaje> pendientes = u.rol() == RolUsuario.ADMINISTRADOR
+                ? mensajes.reportadosTodos(EstadoMensaje.REPORTADO)
+                : mensajes.reportadosDelInstructor(u.id(), EstadoMensaje.REPORTADO);
+        return pendientes.stream().map(m -> new MensajeReportado(
                 m.getId(), m.getCurso().getId(), m.getCurso().getTitulo(), m.getUsuario().getId(), m.getUsuario().getNombre(),
                 m.getUsuario().getRol(), m.getContenido(), m.getFechaEnvio(), m.getFechaReporte(),
                 reportes.delMensaje(m.getId()).stream().map(r -> r.getReportante().getNombre()).toList())).toList();

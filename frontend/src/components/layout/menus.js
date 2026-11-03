@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ClipboardCheck,
   FileText,
   Gamepad2,
   House,
@@ -17,6 +18,7 @@ export const MENU = {
   ESTUDIANTE: [
     { a: "/inicio", t: "Inicio", i: House },
     { a: "/cursos", t: "Mis cursos", i: BookOpen },
+    { a: "/evaluaciones", t: "Evaluaciones", i: ClipboardCheck },
     { a: "/progreso", t: "Mi progreso", i: TrendingUp },
     { a: "/logros", t: "Logros", i: Trophy },
     { a: "/comunidad", t: "Comunidad", i: Users },

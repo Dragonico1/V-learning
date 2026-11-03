@@ -58,9 +58,9 @@ public class ChatController {
         return new MensajeRespuesta("Listo: el mensaje se mantiene en la conversación.");
     }
 
-    /** Sección «Mensajes reportados» del instructor: pendientes en todos sus cursos. */
+    /** Sección «Mensajes reportados»: pendientes en los cursos del instructor, o en todos si es administrador. */
     @GetMapping("/moderacion/reportes")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR','ADMINISTRADOR')")
     public List<MensajeReportado> reportados(@AuthenticationPrincipal UsuarioPrincipal u) {
         return chat.reportados(u);
     }
