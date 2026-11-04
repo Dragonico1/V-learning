@@ -223,7 +223,7 @@ Si Ollama no está disponible, el resto de la plataforma funciona y el Tutor res
 
 ## 7. Cuentas de demostración
 
-> ⚠️ Solo para desarrollo. Las cuentas las crea el `DataSeeder` únicamente si la tabla de usuarios está vacía. Los cursos de ejemplo se crean si faltan y existe al menos un instructor.
+> ⚠️ Solo para desarrollo. Las cuentas base las crea el `DataSeeder` únicamente si la tabla de usuarios está vacía; los 7 estudiantes adicionales se crean si su correo no existe. Los cursos de ejemplo se crean si faltan y existe al menos un instructor.
 
 | Rol | Correo | Contraseña | Nota |
 |---|---|---|---|
@@ -231,10 +231,19 @@ Si Ollama no está disponible, el resto de la plataforma funciona y el Tutor res
 | Instructora | `laura.mejia@tdea.edu.co` | `Vlearning#2026` | Dueña del curso y de los 5 cursos de ejemplo |
 | Estudiante | `camila.rojas@tdea.edu.co` | `Temporal#2026` | **Primer acceso pendiente**: recorre cambio de contraseña, VARK y accesibilidad |
 | Estudiante | `andres.gomez@tdea.edu.co` | `Vlearning#2026` | |
-| Estudiante | `sofia.restrepo@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `sofia.restrepo@tdea.edu.co` | `Vlearning#2026` | Única con avance precargado: módulo 1 completo y módulo 2 al 40 % (50 % del curso, 100 puntos) |
 | Estudiante | `mateo.alvarez@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `valentina.ospina@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `santiago.cardona@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `isabella.marin@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `daniel.henao@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `mariana.toro@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `sebastian.zapata@tdea.edu.co` | `Vlearning#2026` | |
+| Estudiante | `juliana.giraldo@tdea.edu.co` | `Vlearning#2026` | |
 
-Curso de ejemplo (publicado): **Introducción a la programación**, con 2 módulos, 4 contenidos (3 lecturas y 1 video con subtítulos y transcripción), un quiz de 2 preguntas y las 4 cuentas de estudiante inscritas. Además se crean 5 cursos de Ingeniería de Software (Python, React, bases de datos, Scrum y seguridad), cada uno con 3 módulos, contenidos en varios formatos, recursos accesibles y un quiz de 3 preguntas. Los videos y podcasts apuntan a URLs de ejemplo (`example.org`): no reproducen audio real.
+Curso de ejemplo (publicado): **Introducción a la programación**, con 2 módulos, 4 contenidos (3 lecturas y 1 video con subtítulos y transcripción), un quiz de 2 preguntas y las 11 cuentas de estudiante inscritas. Además se crean 5 cursos de Ingeniería de Software (Python, React, bases de datos, Scrum y seguridad), cada uno con 3 módulos, contenidos en varios formatos, recursos accesibles y un quiz de 3 preguntas. Los videos y podcasts apuntan a URLs de ejemplo (`example.org`): no reproducen audio real.
+
+Con la bandera de demostración activa, cada arranque del backend borra el avance de los 10 estudiantes demo (progreso, intentos, entregas, consultas al tutor, puntos, insignias, ranking y notificaciones) y deja sus inscripciones en 0 %. Sofía conserva su avance; el test VARK y el perfil de accesibilidad no se tocan.
 
 Las **reglas de puntos, las 4 insignias y el Tutor de IA** se crean siempre que sus tablas estén vacías (también fuera del modo demostración). Con `vlearning.dev.exponer-secretos=true` el arranque imprime una advertencia en el log.
 
