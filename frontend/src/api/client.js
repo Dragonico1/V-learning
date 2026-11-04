@@ -88,6 +88,7 @@ export const api = {
     restablecer: (tokenRec, nuevaPassword) => d(client.post("/auth/restablecer", { token: tokenRec, nuevaPassword })),
     me: () => d(client.get("/auth/me")),
     primerAcceso: (passwordActual, nuevaPassword) => d(client.post("/auth/primer-acceso", { passwordActual, nuevaPassword })),
+    dobleFactor: (habilitado, password) => d(client.put("/auth/doble-factor", { habilitado, password })),
     logout: () => d(client.post("/auth/logout")),
   },
   vark: {

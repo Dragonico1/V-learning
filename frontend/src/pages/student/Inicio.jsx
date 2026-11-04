@@ -715,6 +715,7 @@ export default function EstudianteInicio() {
     </div>
   );
 
+
   return (
     <>
       <h1 className="sr-only">Inicio</h1>

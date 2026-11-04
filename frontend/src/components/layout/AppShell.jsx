@@ -124,6 +124,7 @@ export function AppShell() {
             >
               <PanelPerfil
                 nombre={nombre}
+                programa={usuario.programaAcademico}
                 promedio={promedio}
                 onCerrar={() => setPerfilAbierto(false)}
               />

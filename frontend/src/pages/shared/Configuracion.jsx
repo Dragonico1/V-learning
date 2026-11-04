@@ -11,12 +11,14 @@ import {
   sonidoActivado,
 } from "../../utils/sonido.js";
 import {
+  Banner,
   Button,
   Card,
   Cargando,
   EstadoError,
   OpcionCard,
   PageHeader,
+  PasswordField,
   SelectField,
   Toggle,
 } from "../../components/ui/index.jsx";
@@ -88,6 +90,67 @@ function Notificaciones() {
       <Button cargando={trabajando} onClick={guardar}>
         Guardar notificaciones
       </Button>
+    </Card>
+  );
+}
+
+/** Verificación en dos pasos: obligatoria para instructor y administrador; el estudiante puede desactivarla. */
+function DobleFactor() {
+  const { usuario, setUsuario } = useAuth();
+  const { avisar } = useNotif();
+  const [confirmando, setConfirmando] = useState(false);
+  const [password, setPassword] = useState("");
+  const [trabajando, setTrabajando] = useState(false);
+  const [error, setError] = useState(null);
+  const activo = usuario.dobleFactorHabilitado !== false;
+
+  if (usuario.dobleFactorObligatorio) {
+    return (
+      <Card as="section" aria-labelledby="df">
+        <h2 id="df" className="mb-2 text-xl">Verificación en dos pasos</h2>
+        <Banner tono="info">Es obligatoria para tu rol: cada vez que inicies sesión te enviaremos un código a tu correo institucional.</Banner>
+      </Card>
+    );
+  }
+
+  const cambiar = async (habilitado, pass) => {
+    setTrabajando(true);
+    setError(null);
+    try {
+      const u = await api.auth.dobleFactor(habilitado, pass);
+      setUsuario(u);
+      setConfirmando(false);
+      setPassword("");
+      avisar(habilitado ? "Activaste la verificación en dos pasos." : "Desactivaste la verificación en dos pasos.", "ok");
+    } catch (e) {
+      setError(mensajeError(e));
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
+  return (
+    <Card as="section" aria-labelledby="df">
+      <h2 id="df" className="mb-2 text-xl">Verificación en dos pasos</h2>
+      <Toggle
+        label="Pedir un código al iniciar sesión"
+        descripcion="Te enviamos un código de 6 dígitos a tu correo institucional. Recomendado para proteger tu cuenta."
+        checked={activo}
+        disabled={trabajando}
+        onChange={(v) => { setError(null); if (v) cambiar(true); else setConfirmando(true); }}
+      />
+      {error && <Banner tono="err" className="mt-2">{error}</Banner>}
+      {activo === false && <Banner tono="warn" className="mt-2">Sin este paso, tu cuenta solo está protegida por la contraseña.</Banner>}
+      {confirmando && activo && (
+        <form className="mt-3 grid max-w-sm gap-3" onSubmit={(e) => { e.preventDefault(); cambiar(false, password); }}>
+          <PasswordField label="Confirma tu contraseña para desactivarla" autoComplete="current-password" required
+            value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="flex flex-wrap gap-3">
+            <Button type="submit" cargando={trabajando} disabled={!password}>Desactivar</Button>
+            <Button variante="secondary" onClick={() => { setConfirmando(false); setPassword(""); setError(null); }}>Cancelar</Button>
+          </div>
+        </form>
+      )}
     </Card>
   );
 }
@@ -198,10 +261,11 @@ export default function Configuracion() {
       <PageHeader
         eyebrow="Configuración"
         titulo="Tus preferencias"
-        subtitulo="Notificaciones, métodos de aprendizaje y accesibilidad."
+        subtitulo="Notificaciones, seguridad, métodos de aprendizaje y accesibilidad."
       />
       <div className="grid max-w-3xl gap-6">
         <Notificaciones />
+        <DobleFactor />
         {usuario.rol === "ESTUDIANTE" && <Metodos />}
         <section aria-labelledby="acc">
           <h2 id="acc" className="mb-3 text-xl">

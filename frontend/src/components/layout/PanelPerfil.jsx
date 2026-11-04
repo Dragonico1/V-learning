@@ -256,8 +256,20 @@ function SeccionActividad({ datos, listo }) {
   );
 }
 
+/**
+ * Panel de perfil del estudiante.
+ * - nombre: primer nombre del usuario
+ * - programa: programa académico del estudiante (opcional)
+ * - promedio: avance promedio (0-100) de los cursos activos
+ * - actividad: puntos por día de los últimos 7 días [{ fecha, puntos }].
+ * - onCerrar: cierra el panel cuando vive en el slot lateral del layout.
+ *
+ * La parte superior no hace scroll (así el menú de notificaciones no se recorta);
+ * solo la zona de actividad se desplaza si la pantalla es baja.
+ */
 export default function PanelPerfil({
   nombre,
+  programa,
   promedio,
   actividad,
   onCerrar,
@@ -297,6 +309,13 @@ export default function PanelPerfil({
           <p className="text-lg font-bold text-strong 2xl:text-xl">
             Qué bueno verte, {nombre}
           </p>
+
+          {programa && (
+            <p className="text-sm text-muted 2xl:text-base">
+              <span className="sr-only">Programa académico: </span>
+              {programa}
+            </p>
+          )}
 
           <p className="text-sm text-muted 2xl:text-base">
             Sigue aprendiendo para alcanzar tu meta

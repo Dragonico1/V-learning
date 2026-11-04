@@ -58,8 +58,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const valor = useMemo(() => ({
-    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, iniciarSesion, verificarOtp, cerrarSesion, setUsuario,
-  }), [usuario, cargando, avisoSesion, refrescar, iniciarSesion, verificarOtp, cerrarSesion]);
+    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, verificarOtp, iniciarSesion, cerrarSesion, setUsuario,
+  }), [usuario, cargando, avisoSesion, refrescar, verificarOtp, iniciarSesion, cerrarSesion]);
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }
