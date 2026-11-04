@@ -47,7 +47,7 @@ export function Sidebar({ abierto, onCerrar }) {
   // Clase compartida para todos los elementos de navegación.
   const clase = (activo) =>
     cx(
-      "vl-nav-item flex min-h-11 short:min-h-10 cursor-pointer items-center gap-3 whitespace-nowrap rounded-xl px-3 text-[0.9375rem] transition-colors",
+      "vl-nav-item flex min-h-11 short:min-h-10 cursor-pointer items-center gap-3 whitespace-nowrap rounded-xl px-3 text-[0.9375rem] transition-colors 2xl:text-base",
       !expandido && "md:justify-center",
       activo
         ? "bg-primary-600 font-bold text-white"
@@ -73,7 +73,7 @@ export function Sidebar({ abierto, onCerrar }) {
             size={20}
             strokeWidth={1.9}
             aria-hidden="true"
-            className="shrink-0"
+            className="size-5 shrink-0 2xl:size-6"
           />
           <span className={claseTexto}>{it.t}</span>
         </NavLink>
@@ -108,7 +108,7 @@ export function Sidebar({ abierto, onCerrar }) {
         aria-label="Menú principal"
         className={cx(
           "on-dark fixed inset-y-0 left-0 z-50 flex w-[246px] flex-col bg-sidebar text-white transition-[transform,width] duration-300 md:translate-x-0",
-          expandido ? "md:w-[246px] md:shadow-2xl" : "md:w-[72px]",
+          expandido ? "md:w-[246px] md:shadow-2xl 2xl:w-[270px]" : "md:w-[72px] 2xl:w-[80px]",
           abierto ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -139,14 +139,22 @@ export function Sidebar({ abierto, onCerrar }) {
             aria-label={textoAlternar}
             title={textoAlternar}
             className={cx(
-              "hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F6FED] md:flex",
+              "hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F6FED] md:flex 2xl:h-9 2xl:w-9",
               expandido ? "ml-auto" : "mx-auto",
             )}
           >
             {expandido ? (
-              <ChevronsLeft size={20} strokeWidth={1.9} />
+              <ChevronsLeft
+                size={20}
+                strokeWidth={1.9}
+                className="size-5 2xl:size-6"
+              />
             ) : (
-              <ChevronsRight size={20} strokeWidth={1.9} />
+              <ChevronsRight
+                size={20}
+                strokeWidth={1.9}
+                className="size-5 2xl:size-6"
+              />
             )}
           </button>
 
@@ -187,7 +195,7 @@ export function Sidebar({ abierto, onCerrar }) {
                   size={20}
                   strokeWidth={1.9}
                   aria-hidden="true"
-                  className="shrink-0"
+                  className="size-5 shrink-0 2xl:size-6"
                 />
                 <span className={claseTexto}>Cerrar sesión</span>
               </button>

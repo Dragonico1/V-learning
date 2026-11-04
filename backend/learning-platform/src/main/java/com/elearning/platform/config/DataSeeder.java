@@ -18,7 +18,8 @@ import java.time.LocalDateTime;
 /**
  * Datos iniciales.
  * - Siempre (si las tablas están vacías): reglas de puntos, insignias y tutor de IA por defecto.
- * - Solo con vlearning.dev.sembrar-datos=true y sin usuarios: cuentas y curso de DEMOSTRACIÓN.
+ * - Solo con vlearning.dev.sembrar-datos=true: cuentas y curso de DEMOSTRACIÓN (si no hay usuarios)
+ *   y cinco cursos de ejemplo con módulos, contenidos y evaluaciones (si no existen).
  *   Las credenciales demo son SOLO para desarrollo: apaga la bandera en producción.
  */
 @Slf4j
@@ -45,6 +46,7 @@ public class DataSeeder implements ApplicationRunner {
     private final ReglaGamificacionRepository reglas;
     private final InsigniaRepository insignias;
     private final TutorIARepository tutores;
+    private final CursosDemoSeeder cursosDemo;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -53,9 +55,13 @@ public class DataSeeder implements ApplicationRunner {
                     + "Define VLEARNING_DEV_EXPONER_SECRETOS=false en producción.");
         }
         tx.executeWithoutResult(s -> sembrarBase());
-        if (props.dev().sembrarDatos() && usuarios.count() == 0) {
-            tx.executeWithoutResult(s -> sembrarDemo());
-            log.warn("Se crearon datos de DEMOSTRACIÓN (usuarios @tdea.edu.co). No uses estas credenciales en producción.");
+        if (props.dev().sembrarDatos()) {
+            if (usuarios.count() == 0) {
+                tx.executeWithoutResult(s -> sembrarDemo());
+                log.warn("Se crearon datos de DEMOSTRACIÓN (usuarios @tdea.edu.co). No uses estas credenciales en producción.");
+            }
+            // Cursos de ejemplo: se crean una sola vez y se asignan al primer instructor.
+            tx.executeWithoutResult(s -> cursosDemo.sembrar());
         }
     }
 

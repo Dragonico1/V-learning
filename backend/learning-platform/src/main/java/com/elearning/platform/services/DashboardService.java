@@ -60,7 +60,8 @@ public class DashboardService {
                     .mapToLong(Progreso::getTiempoConsumido).sum();
             long completados = prog.stream().filter(p -> p.getContenido().getModulo().getCurso().getId().equals(cursoId)
                     && p.getEstado() == EstadoProgreso.COMPLETADO && p.getContenido().isPublicado()).count();
-            cursosProg.add(new CursoProgreso(cursoId, i.getCurso().getTitulo(), i.getPorcentajeCompletado(), i.getEstado(),
+            cursosProg.add(new CursoProgreso(cursoId, i.getCurso().getTitulo(), i.getCurso().getImagen(),
+                    i.getPorcentajeCompletado(), i.getEstado(),
                     progresos.contarModulosCompletados(estudianteId, cursoId),
                     contenidos.contarModulosConContenidoPublicado(cursoId), completados, tiempo));
         }
@@ -163,13 +164,13 @@ public class DashboardService {
         List<CursoResumen> lista = new ArrayList<>();
         for (Inscripcion i : insc) {
             lista.add(new CursoResumen(i.getCurso().getId(), i.getCurso().getTitulo(), i.getCurso().getDescripcion(),
-                    i.getCurso().getInstructor().getNombre(), i.getCurso().getEstado(), true, i.getPorcentajeCompletado()));
+                    i.getCurso().getImagen(), i.getCurso().getInstructor().getNombre(), i.getCurso().getEstado(), true, i.getPorcentajeCompletado()));
         }
         for (Curso c : cursos.publicados(EstadoCurso.PUBLICADO)) {
             if (lista.size() >= 3) break;
             if (!inscritos.contains(c.getId())) {
-                lista.add(new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getInstructor().getNombre(),
-                        c.getEstado(), false, BigDecimal.ZERO));
+                lista.add(new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(),
+                        c.getInstructor().getNombre(), c.getEstado(), false, BigDecimal.ZERO));
             }
         }
         return lista.stream().limit(3).toList();

@@ -6,11 +6,13 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
 import { ESTADO_CURSO_TEXTO } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, Dialogo, EstadoError, PageHeader, TextField, Vacio } from "../../components/ui/index.jsx";
+import CampoPortada from "../../components/CampoPortada.jsx";
 import { tonoEstadoCurso } from "./constantes.js";
 
 function FormularioCurso({ onCreado, onCancelar }) {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [imagen, setImagen] = useState("");
   const [error, setError] = useState(null);
   const [campos, setCampos] = useState({});
   const [trabajando, setTrabajando] = useState(false);
@@ -21,7 +23,7 @@ function FormularioCurso({ onCreado, onCancelar }) {
     setCampos({});
     setTrabajando(true);
     try {
-      const creado = await api.instructor.crearCurso({ titulo: titulo.trim(), descripcion: descripcion.trim() || null });
+      const creado = await api.instructor.crearCurso({ titulo: titulo.trim(), descripcion: descripcion.trim() || null, imagen: imagen.trim() || null });
       onCreado(creado);
     } catch (err) {
       setError(mensajeError(err, "No pudimos crear el curso. Revisa los datos e intenta de nuevo."));
@@ -37,6 +39,7 @@ function FormularioCurso({ onCreado, onCancelar }) {
       <TextField label="Título del curso" required maxLength={200} value={titulo} onChange={(e) => setTitulo(e.target.value)} error={campos.titulo} />
       <TextField multilinea label="Descripción" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
         ayuda="Cuenta en pocas palabras de qué trata el curso. Es opcional." error={campos.descripcion} />
+      <CampoPortada valor={imagen} onChange={setImagen} />
       <div className="flex flex-wrap gap-3">
         <Button type="submit" cargando={trabajando} disabled={!titulo.trim()} motivo={!titulo.trim() ? "Escribe el título del curso." : undefined}>Crear curso</Button>
         <Button variante="secondary" onClick={onCancelar} disabled={trabajando}>Cancelar</Button>

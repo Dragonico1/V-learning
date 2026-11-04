@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, mensajeError } from "../../api/client.js";
 import { useNotif } from "../../context/NotifContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
+import { useTexto } from "../../utils/useTexto.js";
 import { TIPO_EVAL_TEXTO, fmtFecha, fmtPct } from "../../utils/format.js";
 import {
   Badge,
@@ -45,12 +46,13 @@ async function cargarTodas() {
 
 /** RF-007: lista de evaluaciones de mis cursos. */
 export default function Evaluaciones() {
+  const t = useTexto();
   const nav = useNavigate();
   const { avisar } = useNotif();
   const { datos, cargando, error, recargar } = useAsync(cargarTodas, []);
   const [iniciando, setIniciando] = useState(null);
 
-  if (cargando && !datos) return <Cargando texto="Cargando evaluaciones…" />;
+  if (cargando && !datos) return <Cargando texto={t("Cargando evaluaciones…")} />;
   if (error && !datos)
     return <EstadoError mensaje={error} onReintentar={recargar} />;
 
@@ -76,12 +78,12 @@ export default function Evaluaciones() {
     <>
       <VolverACursos />
       <PageHeader
-        titulo="Evaluaciones y tareas"
-        subtitulo="Presenta las evaluaciones y entrega las tareas de tus cursos. Tus respuestas se guardan solas."
+        titulo={t("Evaluaciones y tareas")}
+        subtitulo={t("Presenta las evaluaciones y entrega las tareas de tus cursos. Tus respuestas se guardan solas.")}
       />
       {datos.length === 0 ? (
-        <Vacio titulo="Aún no hay evaluaciones ni tareas">
-          Aparecerán aquí cuando tus cursos las incluyan.
+        <Vacio titulo={t("Aún no hay evaluaciones ni tareas")}>
+          {t("Aparecerán aquí cuando tus cursos las incluyan.")}
         </Vacio>
       ) : (
         datos.map((g, i) => (
@@ -97,22 +99,22 @@ export default function Evaluaciones() {
                       <h3 className="text-lg">{e.titulo}</h3>
                       {e.descripcion && <p>{e.descripcion}</p>}
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                        <Badge tono="primario">{TIPO_EVAL_TEXTO[e.tipo]}</Badge>
+                        <Badge tono="primario">{t(TIPO_EVAL_TEXTO[e.tipo])}</Badge>
                         {e.tiempoLimiteMinutos ? (
                           <span>{e.tiempoLimiteMinutos} min</span>
                         ) : (
-                          <span>Sin límite de tiempo</span>
+                          <span>{t("Sin límite de tiempo")}</span>
                         )}
                         {e.fechaLimite &&
                           (e.vencida ? (
-                            <Badge tono="err">Plazo vencido</Badge>
+                            <Badge tono="err">{t("Plazo vencido")}</Badge>
                           ) : (
-                            <span>Fecha límite: {fmtFecha(e.fechaLimite)}</span>
+                            <span>{t("Fecha límite", "Último día")}: {fmtFecha(e.fechaLimite)}</span>
                           ))}
-                        <span>{e.intentos} intento(s)</span>
+                        <span>{e.intentos} {e.intentos === 1 ? t("intento", "vez") : t("intentos", "veces")}</span>
                         {e.mejorPorcentaje != null && (
                           <span>
-                            Mejor resultado: {fmtPct(e.mejorPorcentaje)}
+                            {t("Mejor resultado", "Tu mejor nota")}: {fmtPct(e.mejorPorcentaje)}
                           </span>
                         )}
                       </p>
@@ -122,7 +124,7 @@ export default function Evaluaciones() {
                         variante="secondary"
                         to={`/cursos/${g.cursoId}#m-${g.moduloId}`}
                       >
-                        Ir al módulo
+                        {t("Ir al módulo")}
                         <span className="sr-only"> de {e.titulo}</span>
                       </Button>
                       <Button
@@ -131,10 +133,10 @@ export default function Evaluaciones() {
                         onClick={() => iniciar(e)}
                       >
                         {e.intentoEnProgresoId
-                          ? "Reanudar"
+                          ? t("Reanudar")
                           : e.intentos > 0
-                            ? "Intentar de nuevo"
-                            : "Comenzar"}
+                            ? t("Intentar de nuevo")
+                            : t("Comenzar")}
                         <span className="sr-only"> {e.titulo}</span>
                       </Button>
                     </div>
@@ -151,18 +153,18 @@ export default function Evaluaciones() {
                   )}
                 </Card>
               ))}
-              {g.tareas.map((t) => (
+              {g.tareas.map((tarea) => (
                 <TareaEstudianteCard
-                  key={`t${t.id}`}
-                  tarea={t}
+                  key={`t${tarea.id}`}
+                  tarea={tarea}
                   onCambio={recargar}
                   acciones={
                     <Button
                       variante="secondary"
                       to={`/cursos/${g.cursoId}#m-${g.moduloId}`}
                     >
-                      Ir al módulo
-                      <span className="sr-only"> de {t.titulo}</span>
+                      {t("Ir al módulo")}
+                      <span className="sr-only"> de {tarea.titulo}</span>
                     </Button>
                   }
                 />

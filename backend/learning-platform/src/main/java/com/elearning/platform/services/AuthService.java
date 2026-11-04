@@ -23,8 +23,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * RF-002 Autenticar: correo + contraseña → OTP → JWT. Los fallos se auditan y cuentan en una
- * ventana; al superar el máximo se bloquea temporalmente y se avisa por correo.
+ * RF-002 Autenticar: los estudiantes entran directo con correo y contraseña; el personal
+ * (administrador e instructor) añade un OTP. Los fallos se auditan y cuentan en una ventana;
+ * al superar el máximo se bloquea temporalmente y se avisa por correo.
  * noRollbackFor: los contadores de intentos deben guardarse aunque la operación responda con error.
  */
 @Service
@@ -68,7 +69,7 @@ public class AuthService {
     }
 
     @Transactional(noRollbackFor = ApiException.class)
-    public LoginRespuesta login(LoginRequest req, String ip) {
+    public Object login(LoginRequest req, String ip) {
         String correoNormalizado = req.correo().trim().toLowerCase();
         Usuario u = usuarios.findByCorreoInstitucionalIgnoreCase(correoNormalizado).orElse(null);
         if (u == null) {
@@ -93,11 +94,18 @@ public class AuthService {
             throw credencialesInvalidas();
         }
 
+        // Los estudiantes no piden código: reciben su sesión directamente.
+        if (u.getRol() == RolUsuario.ESTUDIANTE) {
+            return iniciarSesion(u, correoNormalizado, ip);
+        }
+
         String codigo = otpService.generar(u, ip);
         String cuerpo = "Tu código de verificación de V-Learning es " + codigo + ". Vence en "
                 + props.otp().minutosValidez() + " minutos. Si no fuiste tú, ignora este mensaje.";
         boolean enviado = correo.enviar(u.getCorreoInstitucional(), "Tu código de verificación", cuerpo);
         boolean exponer = props.dev().exponerSecretos();
+        boolean codigoVisible = exponer
+                && (u.getRol() == RolUsuario.ADMINISTRADOR || u.getRol() == RolUsuario.INSTRUCTOR);
         if (!enviado && !exponer) {
             otpService.invalidar(u);
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "CORREO_NO_DISPONIBLE",
@@ -106,7 +114,7 @@ public class AuthService {
         auditoria.registrar(u.getId(), "LOGIN_CREDENCIALES_OK", correoNormalizado, ResultadoAuditoria.PERMITIDO, ip);
         return new LoginRespuesta("OTP_REQUERIDO",
                 "Enviamos un código de 6 números a tu correo. Vence en " + props.otp().minutosValidez() + " minutos.",
-                exponer ? codigo : null);
+                codigoVisible ? codigo : null);
     }
 
     @Transactional(noRollbackFor = ApiException.class)
@@ -132,11 +140,16 @@ public class AuthService {
             throw otpInvalido();
         }
 
+        return iniciarSesion(u, correoNormalizado, ip);
+    }
+
+    /** Abre la sesión y audita el acceso correcto. */
+    private SesionRespuesta iniciarSesion(Usuario u, String correo, String ip) {
         u.reiniciarIntentosFallidos();
         u.setUltimoAcceso(LocalDateTime.now());
         usuarios.save(u);
         SesionService.TokenEmitido emitido = sesiones.iniciar(u, ip);
-        auditoria.registrar(u.getId(), "LOGIN_OK", correoNormalizado, ResultadoAuditoria.PERMITIDO, ip);
+        auditoria.registrar(u.getId(), "LOGIN_OK", correo, ResultadoAuditoria.PERMITIDO, ip);
         return new SesionRespuesta(emitido.token(), "Bearer", emitido.expiraPorInactividad(), perfilActual(u));
     }
 

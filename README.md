@@ -187,14 +187,14 @@ cd backend/learning-platform && ./mvnw spring-boot:run
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | No | Sin SMTP el correo no se envía y todo queda en la plataforma |
 | `MAIL_REMITENTE` | No | `no-reply@tdea.edu.co` |
 | `VLEARNING_DEV_EXPONER_SECRETOS` | No | `true` (apágalo en producción) |
-| `VLEARNING_DEV_SEMBRAR_DATOS` | No | `true` (crea datos demo solo si no hay usuarios) |
+| `VLEARNING_DEV_SEMBRAR_DATOS` | No | `true` (crea cuentas demo si no hay usuarios y los cursos de ejemplo que falten) |
 | `VLEARNING_SWAGGER` | No | `true` (`false` oculta Swagger) |
 
 Con el backend arriba:
 
 - API: `http://localhost:8080/api`
 - Swagger: `http://localhost:8080/swagger-ui.html`
-- Al primer arranque, si no hay usuarios, el `DataSeeder` crea los datos de demostración (sección 7).
+- Al primer arranque, si no hay usuarios, el `DataSeeder` crea las cuentas de demostración (sección 7). Además, con la bandera de datos demo activa, crea los 5 cursos de ejemplo que falten y los asigna al primer instructor.
 
 ### 6.3 Frontend
 
@@ -217,28 +217,28 @@ Si Ollama no está disponible, el resto de la plataforma funciona y el Tutor res
 
 ### 6.5 Modo desarrollo sin correo
 
-`vlearning.dev.exponer-secretos=true` (valor por defecto en desarrollo) devuelve en la respuesta de la API el **OTP**, la **contraseña temporal** y el **enlace de recuperación**, para probar sin servidor de correo. Si no configuras SMTP (`SPRING_MAIL_*`), el `MailService` no envía correos: la contraseña temporal solo se devuelve en la API si la entrega por correo falló o si este modo está activo. **Apágalo en cualquier entorno real.**
+`vlearning.dev.exponer-secretos=true` (valor por defecto en desarrollo) devuelve en la respuesta de la API el **OTP**, la **contraseña temporal** y el **enlace de recuperación**, para probar sin servidor de correo. Los **estudiantes inician sesión directamente con correo y contraseña, sin OTP**; el personal (**administrador o instructor**) sí recibe y confirma un código, que solo se expone en la respuesta en modo desarrollo. Si no configuras SMTP (`SPRING_MAIL_*`), el `MailService` no envía correos: la contraseña temporal solo se devuelve en la API si la entrega por correo falló o si este modo está activo. **Apágalo en cualquier entorno real.**
 
 ---
 
 ## 7. Cuentas de demostración
 
-> ⚠️ Solo para desarrollo. Las crea el `DataSeeder` únicamente si la tabla de usuarios está vacía.
+> ⚠️ Solo para desarrollo. Las cuentas las crea el `DataSeeder` únicamente si la tabla de usuarios está vacía. Los cursos de ejemplo se crean si faltan y existe al menos un instructor.
 
 | Rol | Correo | Contraseña | Nota |
 |---|---|---|---|
 | Administrador | `admin@tdea.edu.co` | `Vlearning#2026` | |
-| Instructora | `laura.mejia@tdea.edu.co` | `Vlearning#2026` | Dueña del curso de ejemplo |
+| Instructora | `laura.mejia@tdea.edu.co` | `Vlearning#2026` | Dueña del curso y de los 5 cursos de ejemplo |
 | Estudiante | `camila.rojas@tdea.edu.co` | `Temporal#2026` | **Primer acceso pendiente**: recorre cambio de contraseña, VARK y accesibilidad |
 | Estudiante | `andres.gomez@tdea.edu.co` | `Vlearning#2026` | |
 | Estudiante | `sofia.restrepo@tdea.edu.co` | `Vlearning#2026` | |
 | Estudiante | `mateo.alvarez@tdea.edu.co` | `Vlearning#2026` | |
 
-Curso de ejemplo (publicado): **Introducción a la programación**, con 2 módulos, 4 contenidos (3 lecturas y 1 video con subtítulos y transcripción), un quiz de 2 preguntas y las 4 cuentas de estudiante inscritas. Los videos de la demo apuntan a URLs de ejemplo (`example.org`): no reproducen video real.
+Curso de ejemplo (publicado): **Introducción a la programación**, con 2 módulos, 4 contenidos (3 lecturas y 1 video con subtítulos y transcripción), un quiz de 2 preguntas y las 4 cuentas de estudiante inscritas. Además se crean 5 cursos de Ingeniería de Software (Python, React, bases de datos, Scrum y seguridad), cada uno con 3 módulos, contenidos en varios formatos, recursos accesibles y un quiz de 3 preguntas. Los videos y podcasts apuntan a URLs de ejemplo (`example.org`): no reproducen audio real.
 
 Las **reglas de puntos, las 4 insignias y el Tutor de IA** se crean siempre que sus tablas estén vacías (también fuera del modo demostración). Con `vlearning.dev.exponer-secretos=true` el arranque imprime una advertencia en el log.
 
-El OTP del login se muestra en la respuesta mientras el modo desarrollo esté activo.
+El OTP del login del personal (administrador e instructor) se muestra en la respuesta mientras el modo desarrollo esté activo.
 
 ---
 
@@ -257,7 +257,7 @@ La plataforma sigue los **24 diagramas de casos de uso (RF-001 a RF-024)**: cada
 flowchart TD
     CU001["RF-001 Registrar cuenta<br/>(Administrador)"] --> CU002
     CU003["RF-003 Recuperar contraseña"] -. "extiende" .-> CU002
-    CU002["RF-002 Autenticar<br/>correo + contraseña + OTP → JWT"]
+    CU002["RF-002 Autenticar<br/>credenciales → JWT<br/>(personal: + OTP)"]
     CU002 --> PA{"¿Primer acceso?"}
     PA -- "sí" --> CPW["Cambiar contraseña temporal"]
     CPW --> CU004
@@ -289,7 +289,7 @@ flowchart TD
 | RF | Actores | Flujo base y ramas | Cómo lo cumple la plataforma |
 |---|---|---|---|
 | **001** Registrar cuenta | Administrador, Sistema | Acceder a gestión de usuarios y elegir «Nuevo usuario» → ingresar nombre, correo, programa y rol → validar correo único y dominio institucional → generar contraseña temporal con hash → enviar credenciales por canal cifrado → registrar evento en auditoría. ⤷ correo duplicado: notificar y cancelar (paso 3). ⤷ falla el envío: reintentar y avisar al administrador para entrega manual segura (paso 5). | `POST /admin/usuarios`. Pantalla *Usuarios → Nuevo usuario*. Si el correo falla, 3 reintentos y un aviso al administrador con la contraseña temporal para entrega manual. |
-| **002** Autenticar | Usuario, Sistema | Ingresar correo y contraseña → verificar contra el hash → solicitar OTP → ingresar el código → validar y generar JWT con el rol → redirigir al dashboard y auditar. ⤷ intento fallido: registrar y mostrar error genérico (paso 2). ⤷ 5 fallos en 15 min: bloquear temporalmente y avisar por correo (paso 2). | Login en dos pantallas (credenciales, luego OTP). Redirige según rol y estado (primer acceso, VARK, accesibilidad). |
+| **002** Autenticar | Usuario, Sistema | Ingresar correo y contraseña → verificar contra el hash → si es personal, solicitar OTP → ingresar el código → validar y generar JWT con el rol → redirigir al dashboard y auditar. Los estudiantes reciben el JWT directamente, sin OTP. ⤷ intento fallido: registrar y mostrar error genérico (paso 2). ⤷ 5 fallos en 15 min: bloquear temporalmente y avisar por correo (paso 2). | Login en una pantalla para estudiantes y en dos pantallas para el personal (credenciales, luego OTP). Redirige según rol y estado (primer acceso, VARK, accesibilidad). |
 | **003** Recuperar contraseña | Usuario, Sistema | Elegir «¿Olvidaste tu contraseña?» e ingresar el correo → generar enlace de un solo uso (15 min) → enviarlo por canal cifrado → abrir el enlace e ingresar la nueva contraseña → validar robustez y guardar con hash → invalidar sesiones y auditar. ⤷ enlace vencido o usado: mostrar error y pedir otro (paso 4). ⤷ contraseña débil: rechazar y pedir otra (paso 5). | `POST /auth/recuperar` (respuesta genérica) y `POST /auth/restablecer`. |
 | **004** Identificar estilo | Usuario, Sistema | Acceder a la evaluación inicial → mostrar el cuestionario → responder las preguntas → procesar y calcular el estilo → guardar el resultado como criterio de personalización. ⤷ pedir ayuda: **mostrar explicación adicional de la pregunta** (paso 3). ⤷ abandonar: guardar progreso parcial y permitir retomar (paso 3). | 12 preguntas, una por pantalla, cada una con botón «Ayuda con esta pregunta». Guardado por respuesta. Resultado: método recomendado y segundo opcional. |
 | **005** Entregar contenido | Usuario, Sistema | Seleccionar curso o módulo → consultar el estilo del perfil → filtrar y ordenar materiales priorizando el formato afín → **visualizar el dashboard de progreso (RF-006)** → consumir el contenido → registrar avance y tiempo. ⤷ cambia manualmente el estilo: actualizar el orden (paso 2). ⤷ sin formato afín: mostrar formato por defecto y notificar al equipo de contenidos (paso 3). | Detalle de curso con módulos ordenados (principal → secundario → resto). Si no hay formato afín, texto estructurado y aviso al instructor del curso. |
@@ -391,7 +391,7 @@ Base: `/api`. Todos requieren JWT salvo los marcados como públicos. El rol se l
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/auth/login` | Verifica correo y contraseña; emite OTP |
+| POST | `/auth/login` | Verifica correo y contraseña; los estudiantes reciben el JWT y el personal un OTP |
 | POST | `/auth/otp/verificar` | Valida OTP y entrega el JWT |
 | POST | `/auth/recuperar` | Solicita enlace de recuperación (respuesta genérica) |
 | POST | `/auth/restablecer` | Restablece con token de un solo uso |
@@ -471,7 +471,7 @@ Los códigos de error siguen un formato único (`ApiException` + `GlobalExceptio
   - `contenidos`: `url_recurso`, `cuerpo` (HU-006, HU-023).
   - `perfiles_aprendizaje`: `metodo_secundario`, distinto del principal.
   - `codigos_otp` (HU-002) y `respuestas_vark_parciales` (HU-005, guardado parcial).
-- **Autenticación en dos pasos (HU-002):** OTP de 6 dígitos válido 5 min, guardado hasheado; bloqueo de 15 min tras 5 fallos en 15 min, con aviso por correo.
+- **Autenticación en dos pasos del personal (HU-002):** OTP de 6 dígitos válido 5 min, guardado hasheado; bloqueo de 15 min tras 5 fallos en 15 min, con aviso por correo. Los estudiantes inician sesión directamente con correo y contraseña.
 - **Sesiones (HU-004):** cada login crea una fila en `sesiones` con el hash SHA-256 del token; se valida firma, sesión activa, inactividad deslizante de 30 min y que el usuario siga habilitado. Cambiar o restablecer la contraseña invalida todas las sesiones.
 - **Contraseñas:** BCrypt; política de al menos 10 caracteres con mayúscula, minúscula, número y símbolo.
 - **Auditoría solo de inserción (HU-015):** se logra con `DENY UPDATE, DELETE` al usuario de la aplicación y no con un trigger, que chocaría con la FK `ON DELETE SET NULL`. Se registra de forma síncrona en una transacción independiente (`REQUIRES_NEW`), de modo que el registro sobrevive aunque la operación se revierta.

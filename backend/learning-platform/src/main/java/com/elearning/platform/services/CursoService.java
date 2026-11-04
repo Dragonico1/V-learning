@@ -99,7 +99,7 @@ public class CursoService {
             items.add(new ModuloItem(m.getId(), m.getTitulo(), m.getDescripcion(), m.getOrden(), haySinAfin, completo,
                     cis, evaluacionesDelModulo(evalPorModulo.getOrDefault(m.getId(), List.of()), principal, motora, curso)));
         }
-        return new CursoDetalle(curso.getId(), curso.getTitulo(), curso.getDescripcion(),
+        return new CursoDetalle(curso.getId(), curso.getTitulo(), curso.getDescripcion(), curso.getImagen(),
                 curso.getInstructor().getNombre(), curso.getEstado(), insc != null,
                 insc == null ? BigDecimal.ZERO : insc.getPorcentajeCompletado(), principal, secundario, items);
     }
@@ -176,8 +176,8 @@ public class CursoService {
     }
 
     private static CursoResumen resumen(Curso c, Inscripcion i) {
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getInstructor().getNombre(),
-                c.getEstado(), i != null, i == null ? BigDecimal.ZERO : i.getPorcentajeCompletado());
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(),
+                c.getInstructor().getNombre(), c.getEstado(), i != null, i == null ? BigDecimal.ZERO : i.getPorcentajeCompletado());
     }
 
     /** Evaluaciones ordenadas por afinidad con el método (RF-007) y marcadas si no son calificables (RF-021). */

@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../context/AuthContext.jsx";
 import { api } from "../../api/client.js";
 import { fmtNumero, ROL_TEXTO } from "../../utils/format.js";
+import { cx } from "../../utils/cx.js";
 import { NotificationBell } from "./NotificationBell.jsx";
 
 export function ChipPuntos() {
@@ -48,7 +49,13 @@ export function ChipPuntos() {
   );
 }
 
-export function Topbar({ onMenu, buscadorRef, cuentaEnPanel = false }) {
+export function Topbar({
+  onMenu,
+  buscadorRef,
+  perfilEnPanel = false,
+  perfilAbierto = true,
+  onAbrirPerfil,
+}) {
   const { usuario, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -112,12 +119,19 @@ export function Topbar({ onMenu, buscadorRef, cuentaEnPanel = false }) {
           </kbd>
         </div>
       </form>
-      <div
-        className={`ml-auto flex items-center gap-2 md:gap-3${cuentaEnPanel ? " xl:hidden" : ""}`}
-      >
+      <div className="ml-auto flex items-center gap-2 md:gap-3">
         {usuario.rol === "ESTUDIANTE" && <ChipPuntos />}
-        <NotificationBell />
-        <div ref={caja} className="relative">
+        <div
+          className={cx(
+            perfilEnPanel && perfilAbierto && "xl:hidden",
+          )}
+        >
+          <NotificationBell />
+        </div>
+        <div
+          ref={caja}
+          className={cx("relative", perfilEnPanel && "xl:hidden")}
+        >
           <button
             type="button"
             onClick={() => setMenu((m) => !m)}
@@ -167,6 +181,17 @@ export function Topbar({ onMenu, buscadorRef, cuentaEnPanel = false }) {
             </div>
           )}
         </div>
+        {perfilEnPanel && !perfilAbierto && (
+          <button
+            type="button"
+            onClick={onAbrirPerfil}
+            aria-label="Abrir panel de perfil"
+            title="Abrir panel de perfil"
+            className="hidden h-11 w-11 items-center justify-center rounded-full bg-primary-100 text-lg font-extrabold uppercase text-primary-700 hover:bg-primary-200 xl:flex"
+          >
+            {(usuario.nombre ?? "").trim().charAt(0)}
+          </button>
+        )}
       </div>
     </header>
   );

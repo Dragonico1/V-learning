@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
 import { api, mensajeError } from "../../api/client.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { destinoInicial } from "../../utils/destino.js";
@@ -12,9 +11,9 @@ import {
   TextField,
 } from "../../components/ui/index.jsx";
 
-/** RF-002: credenciales → código OTP → sesión. Redirige según rol y lo que falte por completar. */
+/** RF-002: los estudiantes entran directo; el personal confirma con un código OTP. */
 export default function Login() {
-  const { usuario, verificarOtp, avisoSesion } = useAuth();
+  const { usuario, iniciarSesion, verificarOtp, avisoSesion } = useAuth();
   const navigate = useNavigate();
   const [paso, setPaso] = useState(1);
   const [correo, setCorreo] = useState("");
@@ -33,6 +32,12 @@ export default function Login() {
     setCargando(true);
     try {
       const r = await api.auth.login(correo.trim(), password);
+      // Estudiantes: el backend devuelve la sesión directamente.
+      if (r.token) {
+        iniciarSesion(r);
+        navigate(destinoInicial(r.usuario), { replace: true });
+        return;
+      }
       setOtpDev(r.codigoOtp ?? null);
       setInfo(r.mensaje);
       setPaso(2);
@@ -138,9 +143,8 @@ export default function Login() {
           {info && <Banner tono="info">{info}</Banner>}
           {otpDev && (
             <Banner tono="warn">
-              <strong>Modo desarrollo:</strong> tu código es{" "}
+              Tu código es{" "}
               <span className="font-mono text-lg font-extrabold">{otpDev}</span>
-              . En producción llega por correo.
             </Banner>
           )}
           <TextField

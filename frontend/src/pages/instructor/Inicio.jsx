@@ -138,7 +138,7 @@ export default function Inicio() {
       <div className="min-w-0">
         <section
           aria-labelledby="hero"
-          className="relative mb-5 flex min-h-[196px] items-center overflow-hidden rounded-card bg-[linear-gradient(120deg,var(--color-primary-700),var(--color-primary-600)_55%,#7c3aed)] px-12 py-[30px] text-white max-sm:min-h-[180px] max-sm:px-[22px] max-sm:py-[26px]"
+          className="relative mb-5 flex min-h-[240px] items-center overflow-hidden rounded-card bg-[linear-gradient(120deg,var(--color-primary-700),var(--color-primary-600)_55%,#7c3aed)] px-12 py-10 text-white max-sm:min-h-[196px] max-sm:px-[22px] max-sm:py-7 xl:min-h-[256px] xl:py-11"
         >
           <div
             aria-hidden="true"
@@ -171,7 +171,7 @@ export default function Inicio() {
             </p>
             <Link
               to="/cursos"
-              className="mt-1.5 inline-flex min-h-[46px] items-center gap-2.5 rounded-full bg-sidebar py-1 pl-5 pr-1.5 text-base font-bold text-white hover:bg-sidebar-surface"
+              className="mt-1.5 inline-flex min-h-[48px] items-center gap-2.5 rounded-full bg-sidebar py-1.5 pl-6 pr-2 text-base font-bold text-white hover:bg-sidebar-surface"
             >
               Crear curso
               <span className="flex size-[34px] items-center justify-center rounded-full bg-white text-sidebar">
@@ -191,7 +191,7 @@ export default function Inicio() {
               <li key={estado} className="flex list-none">
                 <Link
                   to="/cursos"
-                  className={`${PANEL} group flex flex-1 items-center gap-3 rounded-xl px-4 py-2.5 transition-shadow hover:border-primary-300 hover:shadow-md`}
+                  className={`${PANEL} group flex flex-1 items-center gap-3 rounded-xl px-4 py-3 transition-shadow hover:border-primary-300 hover:shadow-md`}
                 >
                   <span
                     className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${TONO_ICONO}`}

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -143,10 +144,11 @@ public class TutorService {
     }
 
     static TipoRespuestaTutor clasificar(String pregunta) {
-        String p = pregunta.toLowerCase(Locale.ROOT);
+        String p = Normalizer.normalize(pregunta.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
         if (p.contains("ejemplo")) return TipoRespuestaTutor.EJEMPLO;
         if (p.contains("resum") || p.contains("sintetiz")) return TipoRespuestaTutor.RESUMEN;
-        if (p.contains("actividad") || p.contains("ejercicio") || p.contains("practic") || p.contains("práctic")) return TipoRespuestaTutor.ACTIVIDAD;
+        if (p.contains("actividad") || p.contains("ejercicio") || p.contains("practic")) return TipoRespuestaTutor.ACTIVIDAD;
         return TipoRespuestaTutor.EXPLICACION;
     }
 

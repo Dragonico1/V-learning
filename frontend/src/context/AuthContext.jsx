@@ -39,13 +39,17 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener("vl:sesion-expirada", alExpirar);
   }, []);
 
+  const iniciarSesion = useCallback((sesion) => {
+    token.set(sesion.token);
+    setAvisoSesion(null);
+    setUsuario(sesion.usuario);
+    return sesion.usuario;
+  }, []);
+
   const verificarOtp = useCallback(async (correo, codigo) => {
     const r = await api.auth.verificarOtp(correo, codigo);
-    token.set(r.token);
-    setAvisoSesion(null);
-    setUsuario(r.usuario);
-    return r.usuario;
-  }, []);
+    return iniciarSesion(r);
+  }, [iniciarSesion]);
 
   const cerrarSesion = useCallback(async () => {
     try { await api.auth.logout(); } catch { /* la sesión puede haber vencido */ }
@@ -54,8 +58,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const valor = useMemo(() => ({
-    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, verificarOtp, cerrarSesion, setUsuario,
-  }), [usuario, cargando, avisoSesion, refrescar, verificarOtp, cerrarSesion]);
+    usuario, cargando, avisoSesion, setAvisoSesion, refrescar, iniciarSesion, verificarOtp, cerrarSesion, setUsuario,
+  }), [usuario, cargando, avisoSesion, refrescar, iniciarSesion, verificarOtp, cerrarSesion]);
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }

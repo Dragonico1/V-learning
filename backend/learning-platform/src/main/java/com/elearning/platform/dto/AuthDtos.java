@@ -21,7 +21,11 @@ public final class AuthDtos {
             @NotBlank(message = "Escribe tu correo institucional.") @Email(message = "El correo no tiene un formato válido.") String correo,
             @NotBlank(message = "Escribe el código.") @Pattern(regexp = "\\d{6}", message = "El código tiene 6 números.") String codigo) {}
 
-    /** codigoOtp solo se devuelve con vlearning.dev.exponer-secretos=true. */
+    /**
+     * Respuesta del login del personal (admin/instructor). Los estudiantes reciben directamente
+     * una {@link SesionRespuesta} con su token, sin código.
+     * codigoOtp solo se devuelve con vlearning.dev.exponer-secretos=true y para admin o instructor.
+     */
     public record LoginRespuesta(String estado, String mensaje, String codigoOtp) {}
 
     public record RecuperarRequest(

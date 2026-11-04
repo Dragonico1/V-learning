@@ -1,19 +1,37 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, mensajeError } from "../api/client.js";
 import { useAuth } from "./AuthContext.jsx";
-import { PREFS_BASE, aplicarAlDocumento } from "../utils/prefs.js";
+import { PREFS_BASE, TIPOGRAFIA_BASE, aplicarAlDocumento, normalizarTipografia } from "../utils/prefs.js";
 
 const CLAVE = "vl.prefs";
+const CLAVE_FUENTE = "vl.prefs.tipografia-base-v2";
+const CLAVE_FUENTE_MANUAL = "vl.prefs.tipografia-manual";
 const PrefsContext = createContext(null);
 
 function leerLocal() {
   try {
     const t = localStorage.getItem(CLAVE);
-    return t ? { ...PREFS_BASE, ...JSON.parse(t) } : PREFS_BASE;
+    if (!t) return PREFS_BASE;
+    let cfg = normalizarTipografia({ ...PREFS_BASE, ...JSON.parse(t) });
+    // Migración única: versiones anteriores usaban Atkinson/Lexend como valor
+    // automático. La tipografía base actual es Poppins para títulos e Inter para el texto.
+    if (!localStorage.getItem(CLAVE_FUENTE)) {
+      if (cfg.tipografia === "Atkinson Hyperlegible Next" || cfg.tipografia === "Lexend") {
+        cfg = { ...cfg, tipografia: TIPOGRAFIA_BASE };
+      }
+      try { localStorage.setItem(CLAVE_FUENTE, "1"); } catch { /* sin almacenamiento */ }
+    }
+    return cfg;
   } catch { return PREFS_BASE; }
 }
 function guardarLocal(cfg) {
   try { localStorage.setItem(CLAVE, JSON.stringify(cfg)); } catch { /* sin almacenamiento */ }
+}
+function tipografiaElegidaManualmente() {
+  try { return localStorage.getItem(CLAVE_FUENTE_MANUAL) === "1"; } catch { return false; }
+}
+function marcarTipografiaManual() {
+  try { localStorage.setItem(CLAVE_FUENTE_MANUAL, "1"); } catch { /* sin almacenamiento */ }
 }
 
 export function PrefsProvider({ children }) {
@@ -36,9 +54,17 @@ export function PrefsProvider({ children }) {
     api.accesibilidad.perfil()
       .then((p) => {
         if (!activo) return;
-        setCategorias([...(p.categorias ?? [])]);
+        const cats = [...(p.categorias ?? [])];
+        setCategorias(cats);
         if (p.configurado && p.configuracion) {
-          const cfg = { ...PREFS_BASE, ...p.configuracion, espaciadoLinea: Number(p.configuracion.espaciadoLinea) };
+          let cfg = normalizarTipografia({ ...PREFS_BASE, ...p.configuracion, espaciadoLinea: Number(p.configuracion.espaciadoLinea) });
+          // Migración: el servidor pudo guardar Atkinson/Lexend de forma automática
+          // (o como valor predeterminado antiguo). Si no hubo elección manual,
+          // vuelve a Poppins para títulos e Inter para el texto.
+          if (!tipografiaElegidaManualmente()
+              && (cfg.tipografia === "Atkinson Hyperlegible Next" || cfg.tipografia === "Lexend")) {
+            cfg = { ...cfg, tipografia: TIPOGRAFIA_BASE };
+          }
           setConfig(cfg);
           guardarLocal(cfg);
         }
@@ -76,6 +102,7 @@ export function PrefsProvider({ children }) {
   }, [esEstudiante]);
 
   const actualizar = useCallback((parcial) => {
+    if (parcial.tipografia) marcarTipografiaManual();
     const siguiente = { ...configRef.current, ...parcial };
     configRef.current = siguiente;
     setConfig(siguiente);
@@ -83,7 +110,7 @@ export function PrefsProvider({ children }) {
   }, [guardarRemoto]);
 
   const reemplazar = useCallback((cfg, nuevasCategorias) => {
-    const siguiente = { ...PREFS_BASE, ...cfg, espaciadoLinea: Number(cfg.espaciadoLinea) };
+    const siguiente = normalizarTipografia({ ...PREFS_BASE, ...cfg, espaciadoLinea: Number(cfg.espaciadoLinea) });
     setConfig(siguiente);
     guardarLocal(siguiente);
     if (nuevasCategorias) setCategorias([...nuevasCategorias]);

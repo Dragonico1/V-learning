@@ -15,6 +15,7 @@ import { useNotif } from "../../context/NotifContext.jsx";
 import { usePrefs } from "../../context/PrefsContext.jsx";
 import { useTutor } from "../../context/TutorContext.jsx";
 import { useAsync } from "../../utils/useAsync.js";
+import { useTexto } from "../../utils/useTexto.js";
 import { FORMATO_TEXTO } from "../../utils/format.js";
 import {
   Badge,
@@ -29,13 +30,14 @@ import {
 } from "../../components/ui/index.jsx";
 
 function ApoyoCognitivo({ id }) {
+  const t = useTexto();
   const {
     datos: a,
     cargando,
     error,
     recargar,
   } = useAsync(() => api.contenidos.apoyo(id), [id]);
-  if (cargando && !a) return <Cargando texto="Preparando el apoyo…" />;
+  if (cargando && !a) return <Cargando texto={t("Preparando el apoyo…", "Preparando la ayuda…")} />;
   if (error && !a)
     return <EstadoError mensaje={error} onReintentar={recargar} />;
   return (
@@ -48,7 +50,7 @@ function ApoyoCognitivo({ id }) {
       {a.resumen && (
         <Card as="section" aria-labelledby="ac-r">
           <h3 id="ac-r" className="mb-1 text-lg">
-            Resumen
+            {t("Resumen")}
           </h3>
           <p className="lesson-text">{a.resumen}</p>
         </Card>
@@ -56,7 +58,7 @@ function ApoyoCognitivo({ id }) {
       {a.conceptosClave?.length > 0 && (
         <Card as="section" aria-labelledby="ac-c">
           <h3 id="ac-c" className="mb-1 text-lg">
-            Conceptos clave
+            {t("Conceptos clave")}
           </h3>
           <ul className="lesson-text list-disc pl-5">
             {a.conceptosClave.map((c) => (
@@ -68,7 +70,7 @@ function ApoyoCognitivo({ id }) {
       {a.pasos?.length > 0 && (
         <Card as="section" aria-labelledby="ac-p">
           <h3 id="ac-p" className="mb-1 text-lg">
-            Paso a paso
+            {t("Paso a paso")}
           </h3>
           <ol className="lesson-text list-decimal pl-5">
             {a.pasos.map((p) => (
@@ -80,7 +82,7 @@ function ApoyoCognitivo({ id }) {
       {a.unidades?.length > 0 && (
         <Card as="section" aria-labelledby="ac-u">
           <h3 id="ac-u" className="mb-2 text-lg">
-            Contenido en partes cortas
+            {t("Contenido en partes cortas")}
           </h3>
           {a.unidades.map((u) => (
             <div key={u.numero} className="mb-3">
@@ -95,7 +97,7 @@ function ApoyoCognitivo({ id }) {
       {a.versionSimplificada && (
         <Card as="section" aria-labelledby="ac-s">
           <h3 id="ac-s" className="mb-1 text-lg">
-            Versión simplificada
+            {t("Versión simplificada")}
           </h3>
           <p className="lesson-text whitespace-pre-wrap">
             {a.versionSimplificada}
@@ -105,7 +107,7 @@ function ApoyoCognitivo({ id }) {
       {a.glosario?.length > 0 && (
         <Card as="section" aria-labelledby="ac-g">
           <h3 id="ac-g" className="mb-1 text-lg">
-            Glosario
+            {t("Glosario")}
           </h3>
           <dl>
             {a.glosario.map((g) => (
@@ -127,6 +129,7 @@ function LeccionContenido() {
   const { usuario } = useAuth();
   const { avisar } = useNotif();
   const { config } = usePrefs();
+  const t = useTexto();
   const { setContexto } = useTutor();
   const esEstudiante = usuario.rol === "ESTUDIANTE";
   const {
@@ -188,7 +191,7 @@ function LeccionContenido() {
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
-  if (cargando && !c) return <Cargando texto="Cargando la lección…" />;
+  if (cargando && !c) return <Cargando texto={t("Cargando la lección…")} />;
   if (error && !c)
     return <EstadoError mensaje={error} onReintentar={recargar} />;
 
@@ -215,7 +218,7 @@ function LeccionContenido() {
   const alternarVoz = () => {
     const s = window.speechSynthesis;
     if (!s) {
-      avisar("Tu navegador no admite lectura en voz alta.", "error");
+      avisar(t("Tu navegador no admite lectura en voz alta."), "error");
       return;
     }
     if (leyendo) {
@@ -248,11 +251,11 @@ function LeccionContenido() {
     });
   };
 
-  const paneles = [{ id: "contenido", texto: "Contenido" }];
+  const paneles = [{ id: "contenido", texto: t("Contenido") }];
   if (c.apoyoCognitivo)
-    paneles.push({ id: "apoyo", texto: "Apoyo para estudiar" });
+    paneles.push({ id: "apoyo", texto: t("Apoyo para estudiar") });
   if (trans || alt || simple)
-    paneles.push({ id: "texto", texto: "Versión en texto" });
+    paneles.push({ id: "texto", texto: t("Versión en texto") });
 
   return (
     <>
@@ -262,11 +265,11 @@ function LeccionContenido() {
           className="inline-flex min-h-11 items-center gap-1.5 font-bold text-primary-600 underline"
         >
           <ArrowLeft size={16} aria-hidden="true" />
-          Volver al curso
+          {t("Volver al curso")}
         </Link>
       </p>
       <PageHeader
-        eyebrow={FORMATO_TEXTO[c.formato]}
+        eyebrow={t(FORMATO_TEXTO[c.formato])}
         titulo={c.titulo}
         subtitulo={c.descripcion}
         acciones={
@@ -276,14 +279,14 @@ function LeccionContenido() {
               icono={leyendo ? Square : Volume2}
               onClick={alternarVoz}
             >
-              {leyendo ? "Detener lectura" : "Leer en voz alta"}
+              {leyendo ? t("Detener lectura") : t("Leer en voz alta")}
             </Button>
           ) : null
         }
       />
       {!esEstudiante && (
         <Banner tono="info" className="mb-4">
-          Vista previa de solo lectura: no se registra progreso.
+          {t("Vista previa de solo lectura: no se registra progreso.", "Solo estás mirando: no se guarda tu avance.")}
         </Banner>
       )}
       {c.advertencias?.map((a) => (
@@ -293,7 +296,7 @@ function LeccionContenido() {
       ))}
       {c.lenguaSenasDisponible ? (
         <Banner tono="ok" className="mb-3">
-          Este contenido incluye interpretación en lengua de señas.
+          {t("Este contenido incluye interpretación en lengua de señas.")}
         </Banner>
       ) : (
         c.mensajeLenguaSenas && (
@@ -304,7 +307,7 @@ function LeccionContenido() {
       )}
       {c.opcionesAlternativas?.length > 0 && (
         <p className="mb-3 flex flex-wrap items-center gap-2 text-sm">
-          También disponible como:{" "}
+          {t("También disponible como:")}{" "}
           {c.opcionesAlternativas.map((o) => (
             <Badge key={o} tono="tutor">
               {o.replaceAll("_", " ").toLowerCase()}
@@ -314,12 +317,12 @@ function LeccionContenido() {
       )}
       {esEstudiante && (
         <Card className="mb-5 max-w-2xl">
-          <ProgressBar valor={pct} etiqueta="Avance de esta lección" />
+          <ProgressBar valor={pct} etiqueta={t("Avance de esta lección")} />
         </Card>
       )}
       {paneles.length > 1 && (
         <Pestanas
-          etiqueta="Formas de estudiar"
+          etiqueta={t("Formas de estudiar")}
           pestanas={paneles}
           activa={pestana}
           onCambiar={setPestana}
@@ -351,7 +354,7 @@ function LeccionContenido() {
                     default={config.subtitulos}
                   />
                 )}
-                Tu navegador no puede reproducir este video.
+                {t("Tu navegador no puede reproducir este video.")}
               </video>
             )}
             {c.formato === "PODCAST" && (c.urlRecurso || audio) && (
@@ -362,14 +365,13 @@ function LeccionContenido() {
                 src={c.urlRecurso || audio.url}
                 onTimeUpdate={alActualizarTiempo}
               >
-                Tu navegador no puede reproducir este audio.
+                {t("Tu navegador no puede reproducir este audio.")}
               </audio>
             )}
             {c.formato === "SIMULACION" && c.urlRecurso && (
               <Card>
                 <p className="mb-3">
-                  Esta práctica se abre en una pestaña nueva. Cuando termines,
-                  vuelve y márcala como completada.
+                  {t("Esta práctica se abre en una pestaña nueva. Cuando termines, vuelve y márcala como completada.")}
                 </p>
                 <a
                   href={c.urlRecurso}
@@ -378,7 +380,7 @@ function LeccionContenido() {
                   className="vl-btn inline-flex min-h-12 items-center gap-2 rounded-ctl border-[1.5px] border-primary-600 bg-primary-600 px-5 font-bold text-white"
                 >
                   <ExternalLink size={18} aria-hidden="true" />
-                  Abrir simulación
+                  {t("Abrir simulación")}
                   <span className="sr-only">
                     {" "}
                     (se abre en una pestaña nueva)
@@ -395,13 +397,13 @@ function LeccionContenido() {
             )}
             {!c.cuerpo && !c.urlRecurso && !audio && (
               <Banner tono="info">
-                Este contenido todavía no tiene material para mostrar.
+                {t("Este contenido todavía no tiene material para mostrar.")}
               </Banner>
             )}
             {config.transcripcion && trans?.descripcion && (
               <Card as="section" aria-labelledby="tr">
                 <h2 id="tr" className="mb-1 text-lg">
-                  Transcripción
+                  {t("Transcripción")}
                 </h2>
                 <p className="lesson-text whitespace-pre-wrap">
                   {trans.descripcion}
@@ -416,7 +418,7 @@ function LeccionContenido() {
             {trans && (
               <Card as="section" aria-labelledby="t1">
                 <h2 id="t1" className="mb-1 text-lg">
-                  Transcripción
+                  {t("Transcripción")}
                 </h2>
                 <p className="lesson-text whitespace-pre-wrap">
                   {trans.descripcion || "Disponible en el enlace del recurso."}
@@ -429,7 +431,7 @@ function LeccionContenido() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Abrir transcripción
+                      {t("Abrir transcripción")}
                     </a>
                   </p>
                 )}
@@ -438,7 +440,7 @@ function LeccionContenido() {
             {alt && (
               <Card as="section" aria-labelledby="t2">
                 <h2 id="t2" className="mb-1 text-lg">
-                  Descripción del contenido visual
+                  {t("Descripción del contenido visual")}
                 </h2>
                 <p className="lesson-text whitespace-pre-wrap">
                   {alt.descripcion}
@@ -448,7 +450,7 @@ function LeccionContenido() {
             {simple && (
               <Card as="section" aria-labelledby="t3">
                 <h2 id="t3" className="mb-1 text-lg">
-                  Versión simplificada
+                  {t("Versión simplificada")}
                 </h2>
                 <p className="lesson-text whitespace-pre-wrap">
                   {simple.descripcion}
@@ -465,12 +467,12 @@ function LeccionContenido() {
             <div className="flex flex-wrap items-center gap-4">
               {pos >= 0 && siguiente && (
                 <Button icono={ArrowRight} to={`/contenidos/${siguiente.id}`}>
-                  {cierraModulo ? "Siguiente módulo" : "Siguiente"}
+                  {cierraModulo ? t("Siguiente módulo") : t("Siguiente")}
                 </Button>
               )}
               {pos >= 0 && !siguiente && (
                 <Button variante="secondary" to={`/cursos/${c.cursoId}`}>
-                  Volver al curso
+                  {t("Volver al curso")}
                 </Button>
               )}
               {hayEvaluacion && (
@@ -479,7 +481,7 @@ function LeccionContenido() {
                   icono={ClipboardCheck}
                   to="/evaluaciones"
                 >
-                  Ir a la evaluación
+                  {t("Ir a la evaluación")}
                 </Button>
               )}
             </div>
@@ -492,17 +494,17 @@ function LeccionContenido() {
                   completado: true,
                 });
                 if (r) {
-                  avisar("¡Contenido completado!", "ok");
+                  avisar(t("¡Contenido completado!"), "ok");
                   if (r.moduloCompleto)
                     avisar(
-                      "¡Completaste el módulo! Ya puedes presentar su evaluación.",
+                      t("¡Completaste el módulo! Ya puedes presentar su evaluación."),
                       "ok",
                     );
-                  if (r.cursoFinalizado) avisar("¡Finalizaste el curso!", "ok");
+                  if (r.cursoFinalizado) avisar(t("¡Finalizaste el curso!"), "ok");
                 }
               }}
             >
-              Marcar como completado
+              {t("Marcar como completado")}
             </Button>
           )}
         </div>

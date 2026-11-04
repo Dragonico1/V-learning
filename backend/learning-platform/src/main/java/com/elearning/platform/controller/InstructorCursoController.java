@@ -4,6 +4,7 @@ import com.elearning.platform.dto.CursoDtos.*;
 import com.elearning.platform.security.UsuarioPrincipal;
 import com.elearning.platform.services.CursoService;
 import com.elearning.platform.services.InstructorCursoService;
+import com.elearning.platform.services.PortadaService;
 import com.elearning.platform.util.IpUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class InstructorCursoController {
 
     private final InstructorCursoService servicio;
     private final CursoService cursos;
+    private final PortadaService portadas;
 
     @GetMapping("/instructor/cursos")
     public List<CursoResumen> listar(@AuthenticationPrincipal UsuarioPrincipal u) {
@@ -34,6 +37,12 @@ public class InstructorCursoController {
     public CursoResumen crear(@AuthenticationPrincipal UsuarioPrincipal u, @Valid @RequestBody CursoRequest req,
                               HttpServletRequest http) {
         return servicio.crear(u.id(), req, IpUtil.de(http));
+    }
+
+    /** Sube una imagen de portada y devuelve su URL. También acepta enlaces externos en CursoRequest. */
+    @PostMapping("/instructor/cursos/portada")
+    public PortadaRespuesta subirPortada(@RequestParam("archivo") MultipartFile archivo) {
+        return new PortadaRespuesta(portadas.guardar(archivo));
     }
 
     @GetMapping("/instructor/cursos/{id}")

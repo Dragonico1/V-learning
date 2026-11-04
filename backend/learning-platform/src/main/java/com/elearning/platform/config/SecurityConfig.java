@@ -63,6 +63,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/otp/verificar",
                                 "/api/auth/recuperar", "/api/auth/restablecer").permitAll()
+                        // Las portadas de curso son públicas para que el navegador pueda cargarlas.
+                        .requestMatchers(HttpMethod.GET, "/api/archivos/**").permitAll()
                         // El WebSocket se autentica en el handshake con ?token=
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()

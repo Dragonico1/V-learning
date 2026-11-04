@@ -42,6 +42,13 @@ public class NotificacionGestionService {
         return aDto(n);
     }
 
+    /** Marca como leídas todas las notificaciones visibles y devuelve la bandeja actualizada. */
+    @Transactional
+    public ListaNotificaciones marcarTodasLeidas(Long usuarioId) {
+        notificaciones.marcarTodasLeidas(usuarioId, LocalDateTime.now());
+        return listar(usuarioId, 30);
+    }
+
     @Transactional
     public NotificacionDto posponer(Long usuarioId, Long id, String opcion) {
         Notificacion n = propia(usuarioId, id);

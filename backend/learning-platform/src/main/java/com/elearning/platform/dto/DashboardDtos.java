@@ -13,7 +13,7 @@ public final class DashboardDtos {
 
     private DashboardDtos() {}
 
-    public record CursoProgreso(Long cursoId, String titulo, BigDecimal porcentaje, EstadoInscripcion estado,
+    public record CursoProgreso(Long cursoId, String titulo, String imagen, BigDecimal porcentaje, EstadoInscripcion estado,
                                 long modulosCompletos, long modulosTotales, long contenidosCompletados,
                                 long tiempoConsumidoSegundos) {}
 

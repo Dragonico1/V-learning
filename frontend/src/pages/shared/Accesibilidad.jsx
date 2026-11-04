@@ -4,6 +4,7 @@ import { api, mensajeError } from "../../api/client.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { usePrefs } from "../../context/PrefsContext.jsx";
 import { useNotif } from "../../context/NotifContext.jsx";
+import { useTexto } from "../../utils/useTexto.js";
 import { CATEGORIAS } from "../../utils/format.js";
 import {
   Banner,
@@ -19,11 +20,11 @@ import VolverACursos from "../../components/VolverACursos.jsx";
 
 const ICONO = { VISUAL: Eye, AUDITIVA: Ear, MOTORA: Hand, COGNITIVA: Brain };
 const FUENTES = [
+  "Poppins + Inter",
   "Atkinson Hyperlegible Next",
   "Lexend",
   "Arial",
   "Verdana",
-  "Sistema",
 ];
 const hhmm = (d) =>
   d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
@@ -34,6 +35,7 @@ const hhmm = (d) =>
  * sin encabezado ni botón "Volver" propios y en una sola columna.
  */
 export default function Accesibilidad({ embebido = false }) {
+  const t = useTexto();
   const { usuario } = useAuth();
   const {
     config,
@@ -61,7 +63,7 @@ export default function Accesibilidad({ embebido = false }) {
     try {
       const p = await api.accesibilidad.guardarPerfil([...s]);
       reemplazar(p.configuracion, p.categorias);
-      avisar("Actualizamos tu perfil de accesibilidad.", "ok");
+      avisar(t("Actualizamos tu perfil de accesibilidad.", "Actualizamos tu perfil."), "ok");
     } catch (e) {
       setErrorCat(mensajeError(e));
     }
@@ -78,24 +80,23 @@ export default function Accesibilidad({ embebido = false }) {
       {!embebido && <VolverACursos />}
       {!embebido && (
         <PageHeader
-          eyebrow="Accesibilidad"
-          titulo="Ajusta la plataforma a ti"
-          subtitulo="Los cambios se aplican de inmediato y se guardan solos."
+          eyebrow={t("Accesibilidad")}
+          titulo={t("Ajusta la plataforma a ti", "Ajusta la plataforma a tu medida")}
+          subtitulo={t("Los cambios se aplican de inmediato y se guardan solos.", "Los cambios se ven al momento y se guardan solos.")}
         />
       )}
       {!persistenteEnServidor && (
         <Banner tono="info" className="mb-5">
-          Como {usuario.rol === "INSTRUCTOR" ? "instructor" : "administrador"},
-          tus ajustes se guardan solo en este dispositivo.
+          {t("Como", "Eres")} {usuario.rol === "INSTRUCTOR" ? t("instructor", "profesor") : t("administrador", "administrador")}: {t("tus ajustes se guardan solo en este dispositivo.", "tus ajustes se guardan solo en este equipo.")}
         </Banner>
       )}
       <p className="mb-4 min-h-6 font-semibold" role="status">
         {error ? (
           <span className="text-err-fg">{error}</span>
         ) : guardando ? (
-          "Guardando…"
+          t("Guardando…")
         ) : guardadoEn ? (
-          `Cambios guardados automáticamente a las ${hhmm(guardadoEn)}`
+          `${t("Cambios guardados automáticamente a las", "Cambios guardados a las")} ${hhmm(guardadoEn)}`
         ) : (
           ""
         )}
@@ -113,7 +114,7 @@ export default function Accesibilidad({ embebido = false }) {
               variante="secondary"
               onClick={aplicarSugerencia}
             >
-              Aplicar la combinación sugerida
+              {t("Aplicar la combinación sugerida")}
             </Button>
           )}
         </Banner>
@@ -122,7 +123,7 @@ export default function Accesibilidad({ embebido = false }) {
         {esEstudiante && (
           <Card as="section" aria-labelledby="cat">
             <h2 id="cat" className="mb-3 text-xl">
-              Tu perfil
+              {t("Tu perfil", "Tu perfil de accesibilidad")}
             </h2>
             {errorCat && (
               <Banner tono="err" className="mb-3" rol="alert">
@@ -136,7 +137,7 @@ export default function Accesibilidad({ embebido = false }) {
                   multiple
                   icono={ICONO[k]}
                   titulo={v.nombre}
-                  descripcion={v.detalle}
+                  descripcion={t(v.detalle)}
                   seleccionada={categorias.includes(k)}
                   onSelect={() => alternarCategoria(k)}
                 />
@@ -146,7 +147,7 @@ export default function Accesibilidad({ embebido = false }) {
         )}
         <Card as="section" aria-labelledby="aj">
           <h2 id="aj" className="mb-2 text-xl">
-            Ajustes manuales
+            {t("Ajustes manuales")}
           </h2>
           <div className="grid gap-4">
             <div>
@@ -154,7 +155,7 @@ export default function Accesibilidad({ embebido = false }) {
                 htmlFor="tam"
                 className="mb-1.5 block font-bold text-strong"
               >
-                Tamaño del texto: {config.tamanoFuente} px
+                {t("Tamaño del texto:", "Tamaño de la letra:")} {config.tamanoFuente} px
               </label>
               <input
                 id="tam"
@@ -174,7 +175,7 @@ export default function Accesibilidad({ embebido = false }) {
                 htmlFor="lh"
                 className="mb-1.5 block font-bold text-strong"
               >
-                Interlineado: {Number(config.espaciadoLinea).toFixed(1)}
+                {t("Interlineado:", "Espacio entre líneas:")} {Number(config.espaciadoLinea).toFixed(1)}
               </label>
               <input
                 id="lh"
@@ -192,7 +193,7 @@ export default function Accesibilidad({ embebido = false }) {
               />
             </div>
             <SelectField
-              label="Tipografía"
+              label={t("Tipografía", "Tipo de letra")}
               value={config.tipografia}
               onChange={(e) => actualizar({ tipografia: e.target.value })}
             >
@@ -206,7 +207,7 @@ export default function Accesibilidad({ embebido = false }) {
                   htmlFor="ta"
                   className="mb-1.5 block font-bold text-strong"
                 >
-                  Tiempo adicional en evaluaciones: {config.tiempoAdicional} %
+                  {t("Tiempo adicional en evaluaciones", "Tiempo extra en las pruebas")}: {config.tiempoAdicional} %
                 </label>
                 <input
                   id="ta"
@@ -224,38 +225,38 @@ export default function Accesibilidad({ embebido = false }) {
             )}
             <div className="divide-y divide-line">
               <Toggle
-                label="Alto contraste"
-                descripcion="Colores con más contraste."
+                label={t("Alto contraste")}
+                descripcion={t("Colores con más contraste.", "Colores más fuertes para ver mejor.")}
                 checked={config.altoContraste}
                 onChange={(v) => actualizar({ altoContraste: v })}
               />
               <Toggle
-                label="Navegación con teclado"
-                descripcion="Muestra siempre el foco y los atajos."
+                label={t("Navegación con teclado")}
+                descripcion={t("Muestra siempre el foco y los atajos.")}
                 checked={config.navegacionTeclado}
                 onChange={(v) => actualizar({ navegacionTeclado: v })}
               />
               <Toggle
-                label="Optimizar para lector de pantalla"
-                descripcion="Prioriza contenidos con texto alternativo."
+                label={t("Optimizar para lector de pantalla")}
+                descripcion={t("Prioriza contenidos con texto alternativo.")}
                 checked={config.lectorPantalla}
                 onChange={(v) => actualizar({ lectorPantalla: v })}
               />
               {esEstudiante && (
                 <>
                   <Toggle
-                    label="Subtítulos"
+                    label={t("Subtítulos")}
                     checked={config.subtitulos}
                     onChange={(v) => actualizar({ subtitulos: v })}
                   />
                   <Toggle
-                    label="Transcripciones"
+                    label={t("Transcripciones")}
                     checked={config.transcripcion}
                     onChange={(v) => actualizar({ transcripcion: v })}
                   />
                   <Toggle
-                    label="Lectura en voz alta"
-                    descripcion="Botón «Leer en voz alta» en las lecciones."
+                    label={t("Lectura en voz alta")}
+                    descripcion={t("Botón «Leer en voz alta» en las lecciones.")}
                     checked={config.textoAVoz}
                     onChange={(v) => actualizar({ textoAVoz: v })}
                   />
@@ -268,33 +269,30 @@ export default function Accesibilidad({ embebido = false }) {
                 icono={RotateCcw}
                 onClick={() => setConfirmar(true)}
               >
-                Restablecer valores predeterminados
+                {t("Restablecer valores predeterminados")}
               </Button>
             </div>
           </div>
         </Card>
       </div>
       <Card className="mt-6">
-        <h2 className="mb-2 text-xl">Vista previa del texto</h2>
+        <h2 className="mb-2 text-xl">{t("Vista previa del texto")}</h2>
         <p className="lesson-text">
-          Así se verán las lecciones con tus ajustes. Un buen contraste, un
-          tamaño cómodo y un interlineado amplio ayudan a leer con menos
-          esfuerzo.
+          {t("Así se verán las lecciones con tus ajustes. Un buen contraste, un tamaño cómodo y un interlineado amplio ayudan a leer con menos esfuerzo.", "Así se verán las lecciones con tus ajustes. Los colores, el tamaño y el espacio entre líneas te ayudan a leer mejor.")}
         </p>
       </Card>
       <ConfirmarDialogo
         abierto={confirmar}
         onCerrar={() => setConfirmar(false)}
-        titulo="¿Restablecer los ajustes?"
-        textoConfirmar="Sí, restablecer"
+        titulo={t("¿Restablecer los ajustes?", "¿Volver a los ajustes originales?")}
+        textoConfirmar={t("Sí, restablecer", "Sí, volver")}
         onConfirmar={async () => {
           await restablecer();
-          avisar("Restablecimos los valores predeterminados.", "ok");
+          avisar(t("Restablecimos los valores predeterminados.", "Volvimos a los ajustes originales."), "ok");
         }}
       >
         <p>
-          Tus ajustes volverán a los valores originales. Tu perfil de categorías
-          se conserva.
+          {t("Tus ajustes volverán a los valores originales. Tu perfil de categorías se conserva.", "Tus ajustes volverán a como estaban al principio. Tu perfil de accesibilidad se mantiene.")}
         </p>
       </ConfirmarDialogo>
     </Raiz>

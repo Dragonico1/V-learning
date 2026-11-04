@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Accessibility, Trophy } from "lucide-react";
+import { Accessibility, Trophy, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell.jsx";
 import { fmtNumero } from "../../utils/format.js";
 import { cx } from "../../utils/cx.js";
@@ -8,32 +8,37 @@ import { cx } from "../../utils/cx.js";
 const RADIO = 36;
 const CIRCUNFERENCIA = 2 * Math.PI * RADIO;
 
-const DIAS_LETRA = ["D", "L", "M", "X", "J", "V", "S"];
+const DIAS_LETRA = ["L", "M", "M", "J", "V", "S", "D"];
 const DIAS_NOMBRE = [
-  "Domingo",
   "Lunes",
   "Martes",
   "Miércoles",
   "Jueves",
   "Viernes",
   "Sábado",
+  "Domingo",
 ];
 
 const PUNTOS_DEMO = [40, 0, 65, 30, 0, 20, 45];
 
+/** Actividad de la semana actual, de lunes a domingo (los días futuros quedan en 0). */
 function actividadDemo() {
   const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
 
   return PUNTOS_DEMO.map((puntos, i) => {
-    const fecha = new Date(hoy);
-    fecha.setDate(hoy.getDate() - (PUNTOS_DEMO.length - 1 - i));
+    const fecha = new Date(lunes);
+    fecha.setDate(lunes.getDate() + i);
 
-    return { fecha, puntos };
+    return { fecha, puntos: fecha > hoy ? 0 : puntos };
   });
 }
 
 const BOTON_REDONDO =
-  "flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700! no-underline hover:bg-primary-200";
+  "flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700! no-underline hover:bg-primary-200 2xl:h-11 2xl:w-11";
 
 const limitar = (n) => Math.max(0, Math.min(100, Number(n) || 0));
 
@@ -56,7 +61,7 @@ function BotonIcono({ to, Icono, etiqueta }) {
       title={etiqueta}
       className={BOTON_REDONDO}
     >
-      <Icono size={18} aria-hidden="true" />
+      <Icono size={18} aria-hidden="true" className="2xl:size-5" />
     </Link>
   );
 }
@@ -65,10 +70,10 @@ function AnilloPerfil({ porcentaje, inicial, listo }) {
   const v = limitar(porcentaje);
 
   return (
-    <div className="relative mx-auto mb-3 h-28 w-28">
+    <div className="relative mx-auto mb-3 h-28 w-28 2xl:h-32 2xl:w-32">
       <svg
         viewBox="0 0 80 80"
-        className="h-28 w-28 -rotate-90"
+        className="h-28 w-28 -rotate-90 2xl:h-32 2xl:w-32"
         role="img"
         aria-label={`Avance promedio ${Math.round(v)} %`}
       >
@@ -96,14 +101,14 @@ function AnilloPerfil({ porcentaje, inicial, listo }) {
 
       <span
         aria-hidden="true"
-        className="absolute inset-3.5 flex items-center justify-center rounded-full bg-primary-100 text-3xl font-extrabold uppercase text-primary-700"
+        className="absolute inset-3.5 flex items-center justify-center rounded-full bg-primary-100 text-3xl font-extrabold uppercase text-primary-700 2xl:inset-4 2xl:text-4xl"
       >
         {inicial}
       </span>
 
       <span
         aria-hidden="true"
-        className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-extrabold text-white ring-4 ring-surface"
+        className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-extrabold text-white ring-4 ring-surface 2xl:text-sm"
       >
         {Math.round(v)}%
       </span>
@@ -113,34 +118,45 @@ function AnilloPerfil({ porcentaje, inicial, listo }) {
 
 function TituloSeccion({ id, children, derecha }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between gap-3">
+    <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
       <h3 id={id} className="text-base!">
         {children}
       </h3>
 
-      {derecha}
+      {derecha && (
+        <>
+          <span aria-hidden="true" className="text-muted">
+            ·
+          </span>
+          {derecha}
+        </>
+      )}
     </div>
   );
 }
 
 /**
- * Barras de los últimos 7 días en una caja lavanda con eje Y.
+ * Barras de la semana actual (lunes a domingo) en una caja lavanda con eje Y.
  * Morado = día con más actividad, lila = menos, gris = sin actividad.
  */
 function SeccionActividad({ datos, listo }) {
-  const dias = useMemo(
-    () =>
-      datos.map((d) => {
-        const fecha = new Date(d.fecha);
+  const dias = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
 
-        return {
-          puntos: Math.max(0, Number(d.puntos) || 0),
-          letra: DIAS_LETRA[fecha.getDay()],
-          nombre: DIAS_NOMBRE[fecha.getDay()],
-        };
-      }),
-    [datos],
-  );
+    return datos.map((d) => {
+      const fecha = new Date(d.fecha);
+      fecha.setHours(0, 0, 0, 0);
+      const indice = (fecha.getDay() + 6) % 7;
+
+      return {
+        puntos: Math.max(0, Number(d.puntos) || 0),
+        letra: DIAS_LETRA[indice],
+        nombre: DIAS_NOMBRE[indice],
+        esHoy: fecha.getTime() === hoy.getTime(),
+      };
+    });
+  }, [datos]);
 
   const max = Math.max(0, ...dias.map((d) => d.puntos));
   const techo = Math.max(20, Math.ceil(max / 20) * 20);
@@ -153,24 +169,23 @@ function SeccionActividad({ datos, listo }) {
         id="perfil-actividad"
         derecha={
           <span className="text-sm text-muted">
-            Últimos 7 días ·{" "}
             <span className="font-bold text-strong">
               {fmtNumero(total)} pts
             </span>
           </span>
         }
       >
-        Actividad
+        Actividad semanal
       </TituloSeccion>
 
       <div
         role="img"
-        aria-label={`Puntos de los últimos 7 días: ${resumen}`}
-        className="grid grid-cols-[auto_1fr] grid-rows-[88px_auto] gap-x-2 rounded-[14px] bg-primary-100/60 px-3.5 pb-2.5 pt-3.5"
+        aria-label={`Puntos de esta semana: ${resumen}`}
+        className="grid grid-cols-[auto_1fr] grid-rows-[88px_auto] gap-x-2 rounded-[14px] bg-primary-100/60 px-3.5 pb-2.5 pt-3.5 2xl:grid-rows-[104px_auto] 2xl:px-4"
       >
         <div
           aria-hidden="true"
-          className="flex flex-col justify-between text-right text-xs leading-none text-muted"
+          className="flex flex-col justify-between text-right text-xs leading-none text-muted 2xl:text-sm"
         >
           <span>{fmtNumero(techo)}</span>
           <span>{fmtNumero(techo / 2)}</span>
@@ -182,7 +197,7 @@ function SeccionActividad({ datos, listo }) {
           className="flex items-end gap-1.5 border-b border-primary-200"
         >
           {dias.map((d, i) => {
-            const esHoy = i === dias.length - 1;
+            const esHoy = d.esHoy;
             const alto = (d.puntos / techo) * 100;
 
             return (
@@ -199,7 +214,7 @@ function SeccionActividad({ datos, listo }) {
                 <div
                   title={`${esHoy ? "Hoy" : d.nombre} · ${fmtNumero(d.puntos)} pts`}
                   className={cx(
-                    "w-[22px] max-w-full rounded-t-[5px] rounded-b-[2px] motion-safe:transition-[height] motion-safe:duration-1000 motion-safe:ease-out",
+                    "w-[22px] max-w-full rounded-t-[5px] rounded-b-[2px] motion-safe:transition-[height] motion-safe:duration-1000 motion-safe:ease-out 2xl:w-[26px]",
                     d.puntos === 0
                       ? "bg-track"
                       : d.puntos >= max * 0.5
@@ -220,20 +235,18 @@ function SeccionActividad({ datos, listo }) {
 
         <div
           aria-hidden="true"
-          className="flex gap-1.5 pt-1 text-xs text-muted"
+          className="flex gap-1.5 pt-1 text-xs text-muted 2xl:text-sm"
         >
           {dias.map((d, i) => {
-            const esHoy = i === dias.length - 1;
-
             return (
               <span
                 key={i}
                 className={cx(
                   "flex-1 text-center",
-                  esHoy && "font-bold text-primary-700",
+                  d.esHoy && "font-bold text-primary-700",
                 )}
               >
-                {esHoy ? "Hoy" : d.letra}
+                {d.letra}
               </span>
             );
           })}
@@ -247,7 +260,7 @@ export default function PanelPerfil({
   nombre,
   promedio,
   actividad,
-  conCampana = false,
+  onCerrar,
 }) {
   const listo = useMontado();
   const demo = useMemo(() => actividadDemo(), []);
@@ -255,13 +268,25 @@ export default function PanelPerfil({
   return (
     <section
       aria-labelledby="perfil"
-      className="flex h-full min-h-0 flex-col text-center"
+      className="relative flex h-full min-h-0 flex-col text-center"
     >
       <h2 id="perfil" className="sr-only">
         Tu perfil
       </h2>
 
-      <div className="flex shrink-0 flex-col items-center gap-4 pt-4">
+      {onCerrar && (
+        <button
+          type="button"
+          onClick={onCerrar}
+          aria-label="Cerrar panel de perfil"
+          title="Cerrar panel de perfil"
+          className="absolute right-0 top-1 hidden h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-subtle hover:text-strong xl:flex"
+        >
+          <X size={18} aria-hidden="true" />
+        </button>
+      )}
+
+      <div className="flex shrink-0 flex-col items-center gap-4 pt-4 2xl:gap-5">
         <AnilloPerfil
           porcentaje={promedio}
           inicial={nombre.charAt(0)}
@@ -269,21 +294,19 @@ export default function PanelPerfil({
         />
 
         <div className="grid gap-0.5">
-          <p className="text-lg font-bold text-strong">
+          <p className="text-lg font-bold text-strong 2xl:text-xl">
             Qué bueno verte, {nombre}
           </p>
 
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted 2xl:text-base">
             Sigue aprendiendo para alcanzar tu meta
           </p>
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          {conCampana && (
-            <div className="max-xl:hidden">
-              <NotificationBell redonda />
-            </div>
-          )}
+          <div className="max-xl:hidden">
+            <NotificationBell redonda />
+          </div>
 
           <BotonIcono
             to="/accesibilidad"

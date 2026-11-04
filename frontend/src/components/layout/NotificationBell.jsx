@@ -6,10 +6,16 @@ import { fmtFecha } from "../../utils/format.js";
 
 /** Campana con punto rojo y centro de notificaciones (RF-011). */
 export function NotificationBell({ redonda = false }) {
-  const { lista, noLeidas } = useNotif();
+  const { lista, noLeidas, marcarTodasLeidas } = useNotif();
   const [abierta, setAbierta] = useState(false);
   const caja = useRef(null);
   const idPanel = useId();
+
+  const alternar = () => {
+    const abrir = !abierta;
+    setAbierta(abrir);
+    if (abrir && noLeidas > 0) marcarTodasLeidas();
+  };
 
   useEffect(() => {
     if (!abierta) return undefined;
@@ -31,7 +37,7 @@ export function NotificationBell({ redonda = false }) {
     <div ref={caja} className="relative">
       <button
         type="button"
-        onClick={() => setAbierta((a) => !a)}
+        onClick={alternar}
         aria-expanded={abierta}
         aria-controls={idPanel}
         aria-label={
@@ -39,7 +45,7 @@ export function NotificationBell({ redonda = false }) {
             ? `Notificaciones: ${noLeidas} sin leer`
             : "Notificaciones"
         }
-        className={`relative flex items-center justify-center ${redonda ? "h-11 w-11 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200" : "h-11 w-11 rounded-xl bg-subtle text-strong hover:bg-primary-100"}`}
+        className={`relative flex items-center justify-center ${redonda ? "h-10 w-10 rounded-full bg-primary-100 text-primary-700! hover:bg-primary-200 2xl:h-11 2xl:w-11" : "h-11 w-11 rounded-xl bg-subtle text-strong hover:bg-primary-100"}`}
       >
         <Bell size={20} aria-hidden="true" />
         {noLeidas > 0 && (

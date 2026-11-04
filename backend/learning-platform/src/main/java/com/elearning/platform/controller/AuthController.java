@@ -21,7 +21,7 @@ public class AuthController {
     private final RecuperacionService recuperacion;
 
     @PostMapping("/login")
-    public LoginRespuesta login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
+    public Object login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
         return auth.login(req, IpUtil.de(http));
     }
 

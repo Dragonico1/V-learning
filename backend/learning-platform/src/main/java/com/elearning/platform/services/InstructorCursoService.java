@@ -46,9 +46,10 @@ public class InstructorCursoService {
         c.setInstructor(instructores.getReferenceById(instructorId));
         c.setTitulo(req.titulo().trim());
         c.setDescripcion(req.descripcion());
+        c.setImagen(req.imagen());
         c = cursos.save(c);
         auditoria.registrar(instructorId, "CURSO_CREADO", "cursos/" + c.getId(), ResultadoAuditoria.PERMITIDO, ip);
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), null, c.getEstado(), false, BigDecimal.ZERO);
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(), null, c.getEstado(), false, BigDecimal.ZERO);
     }
 
     @Transactional
@@ -56,9 +57,10 @@ public class InstructorCursoService {
         Curso c = acceso.cursoPropio(cursoId, instructorId);
         c.setTitulo(req.titulo().trim());
         c.setDescripcion(req.descripcion());
+        c.setImagen(req.imagen());
         cursos.save(c);
         auditoria.registrar(instructorId, "CURSO_ACTUALIZADO", "cursos/" + cursoId, ResultadoAuditoria.PERMITIDO, ip);
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), null, c.getEstado(), false, BigDecimal.ZERO);
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(), null, c.getEstado(), false, BigDecimal.ZERO);
     }
 
     /** Vista completa del curso para su instructor: todos los contenidos y su conformidad. */
@@ -91,7 +93,7 @@ public class InstructorCursoService {
                     .toList();
             items.add(new ModuloItem(m.getId(), m.getTitulo(), m.getDescripcion(), m.getOrden(), false, false, cis, evs));
         }
-        return new CursoDetalle(curso.getId(), curso.getTitulo(), curso.getDescripcion(),
+        return new CursoDetalle(curso.getId(), curso.getTitulo(), curso.getDescripcion(), curso.getImagen(),
                 curso.getInstructor().getNombre(), curso.getEstado(), false, BigDecimal.ZERO, null, null, items);
     }
 
@@ -241,7 +243,7 @@ public class InstructorCursoService {
         c.publicar();
         cursos.save(c);
         auditoria.registrar(instructorId, "CURSO_PUBLICADO", "cursos/" + cursoId, ResultadoAuditoria.PERMITIDO, ip);
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), null, c.getEstado(), false, BigDecimal.ZERO);
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(), null, c.getEstado(), false, BigDecimal.ZERO);
     }
 
     @Transactional
@@ -250,13 +252,14 @@ public class InstructorCursoService {
         c.archivar();
         cursos.save(c);
         auditoria.registrar(instructorId, "CURSO_ARCHIVADO", "cursos/" + cursoId, ResultadoAuditoria.PERMITIDO, ip);
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), null, c.getEstado(), false, BigDecimal.ZERO);
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(), null, c.getEstado(), false, BigDecimal.ZERO);
     }
 
     // ------------------------------------------------------------------
 
     private CursoResumen resumen(Curso c) {
-        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getInstructor().getNombre(),
+        return new CursoResumen(c.getId(), c.getTitulo(), c.getDescripcion(), c.getImagen(),
+                c.getInstructor().getNombre(),
                 c.getEstado(), false, BigDecimal.ZERO);
     }
 

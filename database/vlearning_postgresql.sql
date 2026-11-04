@@ -95,6 +95,7 @@ CREATE TABLE cursos (
     instructor_id INT NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT,
+    imagen VARCHAR(500),
     estado VARCHAR(20) NOT NULL DEFAULT 'BORRADOR',
     fecha_creacion TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0),
     fecha_actualizacion TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0),

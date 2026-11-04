@@ -7,6 +7,7 @@ import { useAsync } from "../../utils/useAsync.js";
 import { ESTADO_CURSO_TEXTO, FORMATO_TEXTO, TIPO_EVAL_TEXTO, fmtFecha } from "../../utils/format.js";
 import { Badge, Banner, Button, Card, Cargando, Dialogo, EstadoError, PageHeader, Pestanas, TextField, Vacio } from "../../components/ui/index.jsx";
 import ConfirmarDialogo from "../../components/ConfirmarDialogo.jsx";
+import CampoPortada from "../../components/CampoPortada.jsx";
 import InscribirEstudiantes from "../../components/InscribirEstudiantes.jsx";
 import ModuloEditor from "./ModuloEditor.jsx";
 import ContenidoEditor from "./ContenidoEditor.jsx";
@@ -18,6 +19,7 @@ function DatosCurso({ curso, onGuardado }) {
   const { avisar } = useNotif();
   const [titulo, setTitulo] = useState(curso.titulo);
   const [descripcion, setDescripcion] = useState(curso.descripcion ?? "");
+  const [imagen, setImagen] = useState(curso.imagen ?? "");
   const [error, setError] = useState(null);
   const [trabajando, setTrabajando] = useState(false);
   const enviar = async (e) => {
@@ -25,7 +27,7 @@ function DatosCurso({ curso, onGuardado }) {
     setError(null);
     setTrabajando(true);
     try {
-      await api.instructor.editarCurso(curso.id, { titulo: titulo.trim(), descripcion: descripcion.trim() || null });
+      await api.instructor.editarCurso(curso.id, { titulo: titulo.trim(), descripcion: descripcion.trim() || null, imagen: imagen.trim() || null });
       avisar("Guardaste los datos del curso.", "ok");
       onGuardado();
     } catch (err) {
@@ -39,6 +41,7 @@ function DatosCurso({ curso, onGuardado }) {
       {error && <Banner tono="err">{error}</Banner>}
       <TextField label="Título del curso" required maxLength={200} value={titulo} onChange={(e) => setTitulo(e.target.value)} />
       <TextField multilinea label="Descripción" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+      <CampoPortada valor={imagen} onChange={setImagen} />
       <div><Button type="submit" cargando={trabajando} disabled={!titulo.trim()} motivo={!titulo.trim() ? "Escribe el título del curso." : undefined}>Guardar datos</Button></div>
     </Card>
   );

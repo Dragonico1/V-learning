@@ -148,6 +148,7 @@ export const api = {
   notificaciones: {
     listar: (limite = 30) => d(client.get("/notificaciones", { params: { limite } })),
     leida: (id) => d(client.patch(`/notificaciones/${id}/leida`)),
+    leerTodas: () => d(client.patch("/notificaciones/leidas")),
     posponer: (id, opcion) => d(client.post(`/notificaciones/${id}/posponer`, { opcion })),
     preferencias: () => d(client.get("/notificaciones/preferencias")),
     guardarPreferencias: (habilitadas, canal) => d(client.put("/notificaciones/preferencias", { habilitadas, canal })),
@@ -160,6 +161,11 @@ export const api = {
   instructor: {
     cursos: () => d(client.get("/instructor/cursos")),
     crearCurso: (datos) => d(client.post("/instructor/cursos", datos)),
+    subirPortada: (archivo) => {
+      const datos = new FormData();
+      datos.append("archivo", archivo);
+      return d(client.post("/instructor/cursos/portada", datos));
+    },
     curso: (id) => d(client.get(`/instructor/cursos/${id}`)),
     editarCurso: (id, datos) => d(client.put(`/instructor/cursos/${id}`, datos)),
     publicarCurso: (id) => d(client.post(`/instructor/cursos/${id}/publicar`)),

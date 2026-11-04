@@ -29,6 +29,10 @@ public class Curso {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    /** URL de la imagen de portada (enlace externo o archivo subido a /api/archivos/portadas). */
+    @Column(length = 500)
+    private String imagen;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private EstadoCurso estado = EstadoCurso.BORRADOR;

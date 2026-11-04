@@ -3,6 +3,7 @@ package com.elearning.platform.repository;
 import com.elearning.platform.entity.Notificacion;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,6 +22,13 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Long
     @Query("select count(n) from Notificacion n where n.usuario.id = :usuarioId and n.leida = false "
             + "and (n.pospuestaHasta is null or n.pospuestaHasta <= :ahora)")
     long contarNoLeidas(@Param("usuarioId") Long usuarioId, @Param("ahora") LocalDateTime ahora);
+
+    /** Marca como leídas todas las notificaciones visibles del usuario. */
+    @Modifying
+    @Query("update Notificacion n set n.leida = true, n.fechaLectura = :ahora "
+            + "where n.usuario.id = :usuarioId and n.leida = false "
+            + "and (n.pospuestaHasta is null or n.pospuestaHasta <= :ahora)")
+    int marcarTodasLeidas(@Param("usuarioId") Long usuarioId, @Param("ahora") LocalDateTime ahora);
 
     /** Evita repetir el mismo recordatorio el mismo día. */
     @Query("select count(n) from Notificacion n where n.usuario.id = :usuarioId and n.titulo = :titulo "

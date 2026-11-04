@@ -65,13 +65,26 @@ export function NotifProvider({ children }) {
     await recargar();
   }, [recargar]);
 
+  /** Al abrir la bandeja: quita el punto de inmediato y confirma con el servidor. */
+  const marcarTodasLeidas = useCallback(async () => {
+    setNoLeidas(0);
+    setLista((ls) => ls.map((n) => (n.leida ? n : { ...n, leida: true })));
+    try {
+      const r = await api.notificaciones.leerTodas();
+      setLista(r.notificaciones);
+      setNoLeidas(r.noLeidas);
+    } catch {
+      recargar();
+    }
+  }, [recargar]);
+
   const posponer = useCallback(async (id, opcion) => {
     await api.notificaciones.posponer(id, opcion);
     await recargar();
   }, [recargar]);
 
-  const valor = useMemo(() => ({ lista, noLeidas, avisar, recargar, marcarLeida, posponer }),
-    [lista, noLeidas, avisar, recargar, marcarLeida, posponer]);
+  const valor = useMemo(() => ({ lista, noLeidas, avisar, recargar, marcarLeida, marcarTodasLeidas, posponer }),
+    [lista, noLeidas, avisar, recargar, marcarLeida, marcarTodasLeidas, posponer]);
 
   return (
     <NotifContext.Provider value={valor}>

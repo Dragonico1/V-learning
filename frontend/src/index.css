@@ -286,3 +286,45 @@ html[data-targets="large"] .vl-nav-item {
     min-height: 48px;
   }
 }
+
+/* Escala para pantallas grandes: casi toda la interfaz usa rem, así que al subir
+   la escala todo crece junto. prefs.js la multiplica por el tamaño de texto que
+   elige la persona (1920 px o más de ancho ≈ 25 % más grande). */
+:root {
+  --vl-escala: 1;
+}
+@media (min-width: 1700px) {
+  :root {
+    --vl-escala: 1.125;
+  }
+}
+@media (min-width: 1900px) {
+  :root {
+    --vl-escala: 1.25;
+  }
+}
+@media (min-width: 2400px) {
+  :root {
+    --vl-escala: 1.5;
+  }
+}
+html {
+  font-size: calc(16px * var(--vl-escala));
+}
+
+/* Tipografías de accesibilidad: prefs.js pone data-font="atkinson" o "lexend"
+   cuando la persona las elige manualmente. Los títulos siguen la fuente
+   elegida en vez de quedarse siempre en Poppins. */
+html[data-font="atkinson"] {
+  --app-font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+}
+html[data-font="lexend"] {
+  --app-font: "Lexend Variable", "Lexend", system-ui, sans-serif;
+}
+html[data-font="atkinson"],
+html[data-font="lexend"],
+html[data-font="arial"],
+html[data-font="verdana"],
+html[data-font="sistema"] {
+  --heading-font: var(--app-font);
+}

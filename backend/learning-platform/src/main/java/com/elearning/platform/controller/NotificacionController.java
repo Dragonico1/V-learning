@@ -27,6 +27,11 @@ public class NotificacionController {
         return servicio.marcarLeida(u.id(), id);
     }
 
+    @PatchMapping("/leidas")
+    public ListaNotificaciones leidas(@AuthenticationPrincipal UsuarioPrincipal u) {
+        return servicio.marcarTodasLeidas(u.id());
+    }
+
     @PostMapping("/{id}/posponer")
     public NotificacionDto posponer(@AuthenticationPrincipal UsuarioPrincipal u, @PathVariable Long id,
                                     @Valid @RequestBody PosponerRequest req) {

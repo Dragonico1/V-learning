@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface CursoRepository extends JpaRepository<Curso, Long> {
 
+    boolean existsByTitulo(String titulo);
+
     @Query("select c from Curso c join fetch c.instructor where c.estado = :estado order by c.titulo")
     List<Curso> publicados(@Param("estado") EstadoCurso estado);
 

@@ -12,12 +12,13 @@ public final class CursoDtos {
 
     private CursoDtos() {}
 
-    public record CursoResumen(Long id, String titulo, String descripcion, String instructor, EstadoCurso estado,
-                               boolean inscrito, BigDecimal porcentaje) {}
+    public record CursoResumen(Long id, String titulo, String descripcion, String imagen, String instructor,
+                               EstadoCurso estado, boolean inscrito, BigDecimal porcentaje) {}
 
     public record CursoRequest(
             @NotBlank(message = "Escribe el título del curso.") @Size(max = 200, message = "Máximo 200 caracteres.") String titulo,
-            String descripcion) {}
+            String descripcion,
+            @Size(max = 500, message = "El enlace de la imagen admite máximo 500 caracteres.") String imagen) {}
 
     public record ModuloRequest(
             @NotBlank(message = "Escribe el título del módulo.") @Size(max = 200, message = "Máximo 200 caracteres.") String titulo,
@@ -51,8 +52,8 @@ public final class CursoDtos {
     public record ModuloItem(Long id, String titulo, String descripcion, Integer orden, boolean sinFormatoAfin,
                              boolean completo, List<ContenidoItem> contenidos, List<EvaluacionItem> evaluaciones) {}
 
-    public record CursoDetalle(Long id, String titulo, String descripcion, String instructor, EstadoCurso estado,
-                               boolean inscrito, BigDecimal porcentaje, EstiloVark metodoPrincipal,
+    public record CursoDetalle(Long id, String titulo, String descripcion, String imagen, String instructor,
+                               EstadoCurso estado, boolean inscrito, BigDecimal porcentaje, EstiloVark metodoPrincipal,
                                EstiloVark metodoSecundario, List<ModuloItem> modulos) {}
 
     public record InscribirRequest(
@@ -64,4 +65,7 @@ public final class CursoDtos {
     public record ConformidadRespuesta(boolean conforme, List<String> faltantes, List<String> advertencias) {}
 
     public record PublicacionRespuesta(Long id, boolean publicado, List<String> advertencias) {}
+
+    /** URL pública de una portada recién subida. */
+    public record PortadaRespuesta(String url) {}
 }
