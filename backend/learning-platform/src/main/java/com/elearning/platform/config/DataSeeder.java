@@ -33,6 +33,8 @@ public class DataSeeder implements ApplicationRunner {
 
     static final String PASSWORD_DEMO = "Vlearning#2026";
     static final String PASSWORD_TEMPORAL_DEMO = "Temporal#2026";
+    /** Única cuenta que NO se reinicia: conserva todo su estado y avance. */
+    static final String CORREO_CUENTA_PROTEGIDA = "sofia.restrepo@tdea.edu.co";
 
     private final VlearningProperties props;
     private final OllamaProperties ollama;
@@ -69,7 +71,7 @@ public class DataSeeder implements ApplicationRunner {
             }
             tx.executeWithoutResult(s -> sembrarEstudiantesAdicionales());
             sembrarAvanceSofia();
-            tx.executeWithoutResult(s -> reiniciarAvanceDemo());
+            tx.executeWithoutResult(s -> reiniciarEstudiantes());
             // Cursos de ejemplo: se crean una sola vez y se asignan al primer instructor.
             tx.executeWithoutResult(s -> cursosDemo.sembrar());
         }
@@ -213,21 +215,55 @@ public class DataSeeder implements ApplicationRunner {
         progresoService.registrar(sofia.getId(), lista.get(2).getId(), new ProgresoRequest(240L, new BigDecimal("40"), false));
     }
 
-    private void reiniciarAvanceDemo() {
-        String ids = "(select id from usuarios where lower(correo_institucional) in ("
-                + "'camila.rojas@tdea.edu.co','andres.gomez@tdea.edu.co','mateo.alvarez@tdea.edu.co',"
-                + "'valentina.ospina@tdea.edu.co','santiago.cardona@tdea.edu.co','isabella.marin@tdea.edu.co',"
-                + "'daniel.henao@tdea.edu.co','mariana.toro@tdea.edu.co','sebastian.zapata@tdea.edu.co',"
-                + "'juliana.giraldo@tdea.edu.co'))";
+    /**
+     * Deja a TODOS los estudiantes (menos Sofía) como si nunca hubieran entrado:
+     * sin inscripciones, progreso, evaluaciones, tareas, puntos, insignias, ranking,
+     * VARK, perfil de accesibilidad, Tutor IA, chat, notificaciones, informes ni sesiones,
+     * y con la cuenta en PRIMER ACCESO (con su contraseña demo original).
+     * No toca administradores ni instructores, ni los cursos. El registro de auditoría
+     * se conserva porque es de solo inserción (HU-015).
+     */
+    private void reiniciarEstudiantes() {
+        String ids = "(select id from usuarios where rol = 'ESTUDIANTE' "
+                + "and lower(correo_institucional) <> '" + CORREO_CUENTA_PROTEGIDA + "')";
+
+        // Chat: primero lo que reportaron, luego sus mensajes (los reportes de esos mensajes caen en cascada).
+        jdbc.update("delete from reportes_mensaje where reportante_id in " + ids);
+        jdbc.update("delete from mensajes where usuario_id in " + ids);
+
+        // Actividad académica (respuestas e insignias caen en cascada).
         jdbc.update("delete from intentos_evaluacion where estudiante_id in " + ids);
-        jdbc.update("delete from progresos where estudiante_id in " + ids);
         jdbc.update("delete from entregas_tarea where estudiante_id in " + ids);
+        jdbc.update("delete from progresos where estudiante_id in " + ids);
         jdbc.update("delete from consultas_tutor where estudiante_id in " + ids);
+
+        // Gamificación.
         jdbc.update("delete from historial_puntos where estudiante_id in " + ids);
-        jdbc.update("delete from perfiles_gamificacion where estudiante_id in " + ids);
         jdbc.update("delete from posiciones_ranking where estudiante_id in " + ids);
+        jdbc.update("delete from perfiles_gamificacion where estudiante_id in " + ids);
+
+        // Onboarding: VARK y accesibilidad (resultados, parciales y ajustes caen en cascada).
+        jdbc.update("delete from perfiles_aprendizaje where estudiante_id in " + ids);
+        jdbc.update("delete from perfiles_accesibilidad where estudiante_id in " + ids);
+
+        // Cursos, avisos, informes y credenciales de sesión.
+        jdbc.update("delete from inscripciones where estudiante_id in " + ids);
         jdbc.update("delete from notificaciones where usuario_id in " + ids);
-        jdbc.update("update inscripciones set porcentaje_completado = 0, estado = 'ACTIVA' where estudiante_id in " + ids);
+        jdbc.update("delete from informes where usuario_id in " + ids);
+        jdbc.update("delete from sesiones where usuario_id in " + ids);
+        jdbc.update("delete from tokens_recuperacion_password where usuario_id in " + ids);
+        jdbc.update("delete from codigos_otp where usuario_id in " + ids);
+
+        // La cuenta vuelve a "nunca ha entrado": primer acceso. Cada quien recupera su contraseña
+        // original de demo (Camila: temporal; el resto: la demo), así el login sigue funcionando.
+        jdbc.update("update usuarios set estado = 'PENDIENTE_PRIMER_ACCESO', password_hash = ?, "
+                        + "ultimo_acceso = null, intentos_fallidos = 0, bloqueado_hasta = null, "
+                        + "notificaciones_habilitadas = true, canal_preferido = 'PLATAFORMA' "
+                        + "where id in " + ids,
+                encoder.encode(PASSWORD_DEMO));
+        jdbc.update("update usuarios set password_hash = ? "
+                        + "where lower(correo_institucional) = 'camila.rojas@tdea.edu.co'",
+                encoder.encode(PASSWORD_TEMPORAL_DEMO));
     }
 
     private <T extends Usuario> T activo(UsuarioRepository repo, T u) {
