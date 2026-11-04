@@ -15,6 +15,7 @@ export function ShortcutsDialog({ abierto, onCerrar }) {
   return (
     <Dialogo abierto={abierto} onCerrar={onCerrar} titulo="Atajos de teclado">
       <p className="mb-3 text-sm text-muted">Los atajos de la lección solo funcionan cuando el reproductor tiene el foco, para no chocar con tu lector de pantalla.</p>
+      <p className="mb-3 text-sm text-muted">Si activas «Narración al navegar con teclado» en Accesibilidad, cada elemento se lee en voz alta cuando lo enfocas con Tab.</p>
       <dl className="divide-y divide-line">
         {ATAJOS.map(([tecla, texto]) => (
           <div key={tecla} className="flex items-center justify-between gap-4 py-2.5">

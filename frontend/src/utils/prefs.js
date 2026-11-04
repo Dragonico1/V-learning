@@ -7,6 +7,7 @@ export const PREFS_BASE = {
   espaciadoLinea: 1.5,
   navegacionTeclado: false,
   lectorPantalla: false,
+  narracionNavegacion: false,
   subtitulos: false,
   transcripcion: false,
   textoAVoz: false,
@@ -40,4 +41,5 @@ export function aplicarAlDocumento(cfg, categorias = []) {
   el.dataset.targets = categorias.includes("MOTORA") ? "large" : "normal";
   el.dataset.keyboard = cfg.navegacionTeclado ? "on" : "off";
   el.dataset.reader = cfg.lectorPantalla ? "on" : "off";
+  el.dataset.talkback = cfg.narracionNavegacion ? "on" : "off";
 }

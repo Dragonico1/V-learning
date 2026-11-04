@@ -190,6 +190,8 @@ const FRASES = {
   "Muestra siempre el foco y los atajos.": "Muestra dónde estás cuando usas el teclado.",
   "Optimizar para lector de pantalla": "Mejorar para lector de pantalla",
   "Prioriza contenidos con texto alternativo.": "Da prioridad a lo que se puede leer en voz alta.",
+  "Narración al navegar con teclado (talkback)": "Escuchar la pantalla",
+  "Lee en voz alta dónde estás y qué elemento tienes enfocado al usar Tab.": "Dice en voz alta dónde estás cuando usas Tab.",
   "Transcripciones": "Texto escrito de los videos",
   "Lectura en voz alta": "Escuchar las lecciones",
   "Botón «Leer en voz alta» en las lecciones.": "Muestra un botón para escuchar el texto.",

@@ -65,6 +65,8 @@ export function PrefsProvider({ children }) {
               && (cfg.tipografia === "Atkinson Hyperlegible Next" || cfg.tipografia === "Lexend")) {
             cfg = { ...cfg, tipografia: TIPOGRAFIA_BASE };
           }
+          // La narración es una preferencia del dispositivo: el servidor no la guarda.
+          cfg = { ...cfg, narracionNavegacion: configRef.current.narracionNavegacion ?? false };
           setConfig(cfg);
           guardarLocal(cfg);
         }
@@ -88,7 +90,9 @@ export function PrefsProvider({ children }) {
     setGuardando(true);
     temporizador.current = setTimeout(async () => {
       try {
-        const r = await api.accesibilidad.guardarConfiguracion({ ...cfg, espaciadoLinea: Number(cfg.espaciadoLinea) });
+        const remoto = { ...cfg, espaciadoLinea: Number(cfg.espaciadoLinea) };
+        delete remoto.narracionNavegacion;
+        const r = await api.accesibilidad.guardarConfiguracion(remoto);
         setAdvertencias(r.advertencias ?? []);
         setSugerencia(r.sugerencia ?? null);
         setError(null);

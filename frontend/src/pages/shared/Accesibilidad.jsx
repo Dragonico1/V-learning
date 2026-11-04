@@ -242,6 +242,12 @@ export default function Accesibilidad({ embebido = false }) {
                 checked={config.lectorPantalla}
                 onChange={(v) => actualizar({ lectorPantalla: v })}
               />
+              <Toggle
+                label={t("Narración al navegar con teclado (talkback)")}
+                descripcion={t("Lee en voz alta dónde estás y qué elemento tienes enfocado al usar Tab.")}
+                checked={config.narracionNavegacion}
+                onChange={(v) => actualizar({ narracionNavegacion: v })}
+              />
               {esEstudiante && (
                 <>
                   <Toggle
