@@ -1,19 +1,23 @@
 package com.elearning.platform.config;
 
+import com.elearning.platform.dto.ContenidoDtos.ProgresoRequest;
 import com.elearning.platform.entity.*;
 import com.elearning.platform.enums.*;
 import com.elearning.platform.repository.*;
+import com.elearning.platform.services.ProgresoService;
 import com.elearning.platform.util.EventosGamificacion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Datos iniciales.
@@ -47,6 +51,9 @@ public class DataSeeder implements ApplicationRunner {
     private final InsigniaRepository insignias;
     private final TutorIARepository tutores;
     private final CursosDemoSeeder cursosDemo;
+    private final ProgresoRepository progresos;
+    private final ProgresoService progresoService;
+    private final JdbcTemplate jdbc;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -60,6 +67,9 @@ public class DataSeeder implements ApplicationRunner {
                 tx.executeWithoutResult(s -> sembrarDemo());
                 log.warn("Se crearon datos de DEMOSTRACIÓN (usuarios @tdea.edu.co). No uses estas credenciales en producción.");
             }
+            tx.executeWithoutResult(s -> sembrarEstudiantesAdicionales());
+            sembrarAvanceSofia();
+            tx.executeWithoutResult(s -> reiniciarAvanceDemo());
             // Cursos de ejemplo: se crean una sola vez y se asignan al primer instructor.
             tx.executeWithoutResult(s -> cursosDemo.sembrar());
         }
@@ -160,6 +170,64 @@ public class DataSeeder implements ApplicationRunner {
             i.setCurso(curso);
             inscripciones.save(i);
         }
+    }
+
+    private void sembrarEstudiantesAdicionales() {
+        String hash = encoder.encode(PASSWORD_DEMO);
+        String[][] datos = {
+                {"Valentina Ospina", "valentina.ospina@tdea.edu.co", "EST-0005", "Ingeniería de Software"},
+                {"Santiago Cardona", "santiago.cardona@tdea.edu.co", "EST-0006", "Ingeniería de Software"},
+                {"Isabella Marín", "isabella.marin@tdea.edu.co", "EST-0007", "Tecnología en Sistemas"},
+                {"Daniel Henao", "daniel.henao@tdea.edu.co", "EST-0008", "Ingeniería de Software"},
+                {"Mariana Toro", "mariana.toro@tdea.edu.co", "EST-0009", "Tecnología en Sistemas"},
+                {"Sebastián Zapata", "sebastian.zapata@tdea.edu.co", "EST-0010", "Ingeniería de Software"},
+                {"Juliana Giraldo", "juliana.giraldo@tdea.edu.co", "EST-0011", "Tecnología en Sistemas"}
+        };
+        Curso demo = cursos.todosConInstructor().stream()
+                .filter(c -> "Introducción a la programación".equals(c.getTitulo()))
+                .findFirst().orElse(null);
+        for (String[] d : datos) {
+            if (usuarios.existsByCorreoInstitucionalIgnoreCase(d[1])) continue;
+            Estudiante e = activo(usuarios, new Estudiante(d[0], d[1], hash, d[2], d[3]));
+            if (demo != null) {
+                Inscripcion i = new Inscripcion();
+                i.setEstudiante(e);
+                i.setCurso(demo);
+                inscripciones.save(i);
+            }
+        }
+    }
+
+    private void sembrarAvanceSofia() {
+        Estudiante sofia = usuarios.findByCorreoInstitucionalIgnoreCase("sofia.restrepo@tdea.edu.co")
+                .filter(u -> u instanceof Estudiante).map(u -> (Estudiante) u).orElse(null);
+        Curso demo = cursos.todosConInstructor().stream()
+                .filter(c -> "Introducción a la programación".equals(c.getTitulo()))
+                .findFirst().orElse(null);
+        if (sofia == null || demo == null) return;
+        List<Long> idsModulos = modulos.findByCursoIdOrderByOrden(demo.getId()).stream().map(Modulo::getId).toList();
+        List<Contenido> lista = contenidos.findByModuloIdInOrderByIdAsc(idsModulos);
+        if (lista.size() < 3 || progresos.findByEstudianteIdAndContenidoId(sofia.getId(), lista.get(0).getId()).isPresent()) return;
+        progresoService.registrar(sofia.getId(), lista.get(0).getId(), new ProgresoRequest(480L, new BigDecimal("100"), true));
+        progresoService.registrar(sofia.getId(), lista.get(1).getId(), new ProgresoRequest(300L, new BigDecimal("100"), true));
+        progresoService.registrar(sofia.getId(), lista.get(2).getId(), new ProgresoRequest(240L, new BigDecimal("40"), false));
+    }
+
+    private void reiniciarAvanceDemo() {
+        String ids = "(select id from usuarios where lower(correo_institucional) in ("
+                + "'camila.rojas@tdea.edu.co','andres.gomez@tdea.edu.co','mateo.alvarez@tdea.edu.co',"
+                + "'valentina.ospina@tdea.edu.co','santiago.cardona@tdea.edu.co','isabella.marin@tdea.edu.co',"
+                + "'daniel.henao@tdea.edu.co','mariana.toro@tdea.edu.co','sebastian.zapata@tdea.edu.co',"
+                + "'juliana.giraldo@tdea.edu.co'))";
+        jdbc.update("delete from intentos_evaluacion where estudiante_id in " + ids);
+        jdbc.update("delete from progresos where estudiante_id in " + ids);
+        jdbc.update("delete from entregas_tarea where estudiante_id in " + ids);
+        jdbc.update("delete from consultas_tutor where estudiante_id in " + ids);
+        jdbc.update("delete from historial_puntos where estudiante_id in " + ids);
+        jdbc.update("delete from perfiles_gamificacion where estudiante_id in " + ids);
+        jdbc.update("delete from posiciones_ranking where estudiante_id in " + ids);
+        jdbc.update("delete from notificaciones where usuario_id in " + ids);
+        jdbc.update("update inscripciones set porcentaje_completado = 0, estado = 'ACTIVA' where estudiante_id in " + ids);
     }
 
     private <T extends Usuario> T activo(UsuarioRepository repo, T u) {
